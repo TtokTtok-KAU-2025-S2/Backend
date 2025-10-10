@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest # (3).OS환경
     if: >
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'develop')
@@ -56,6 +57,7 @@ jobs:
             cd deploy && zip -r deploy.zip .
 
       - name: Beanstalk Deploy
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'  #fork PR 시에는 배포 스텝을 건너뛰기
         uses: einaregilsson/beanstalk-deploy@v20
         with:
             aws_access_key: ${{ secrets.AWS_ACTION_ACCESS_KEY_ID }}
