@@ -1,17 +1,18 @@
 name: Ttokttok Dev CI/CD
 
 on:
-  push:
+  pull_request:
     branches: [develop]
+    types: [closed]
   workflow_dispatch: # (2).수동 실행도 가능하도록
 
 jobs:
   build:
     runs-on: ubuntu-latest # (3).OS환경
     if: >
-     github.event_name == 'workflow_dispatch' ||
-     (github.event_name == 'pull_request' && 
-      github.event.pull_request.merged == true && 
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'develop')
 
     steps:
@@ -49,8 +50,6 @@ jobs:
             cp build/libs/*.jar deploy/application.jar
             cp Procfile deploy/Procfile
             cp -r .ebextensions_dev deploy/.ebextensions
-            [ -d .ebextensions_dev ] && cp -r .ebextensions_dev deploy/.ebextensions || true
-            [ -d .platform ] && cp -r .platform deploy/.platform || true
             cp -r .platform deploy/.platform
             cd deploy && zip -r deploy.zip .
 
