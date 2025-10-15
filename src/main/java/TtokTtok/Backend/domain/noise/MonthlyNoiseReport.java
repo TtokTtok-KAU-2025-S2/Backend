@@ -37,8 +37,8 @@ public class MonthlyNoiseReport extends BaseEntity {
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NoiseWeekly> noiseWeeklies;
 
-    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<NoiseFloor> noiseFloors;
+//    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<NoiseFloor> noiseFloors;
 
     @OneToOne(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private OfficeRecommendation officeRecommendation;
@@ -52,7 +52,7 @@ public class MonthlyNoiseReport extends BaseEntity {
     public List<NoiseType> getNoiseTypes() { return noiseTypes; }
     public List<NoiseTime> getNoiseTimes() { return noiseTimes; }
     public List<NoiseWeekly> getNoiseWeeklies() { return noiseWeeklies; }
-    public List<NoiseFloor> getNoiseFloors() { return noiseFloors; }
+//    public List<NoiseFloor> getNoiseFloors() { return noiseFloors; }
     public OfficeRecommendation getOfficeRecommendation() { return officeRecommendation; }
     public void setId(Long id) { this.id = id; }
     public void setAptUnit(TtokTtok.Backend.domain.complex.AptUnit aptUnit) { this.aptUnit = aptUnit; }
@@ -63,7 +63,7 @@ public class MonthlyNoiseReport extends BaseEntity {
     public void setNoiseTypes(List<NoiseType> noiseTypes) { this.noiseTypes = noiseTypes; }
     public void setNoiseTimes(List<NoiseTime> noiseTimes) { this.noiseTimes = noiseTimes; }
     public void setNoiseWeeklies(List<NoiseWeekly> noiseWeeklies) { this.noiseWeeklies = noiseWeeklies; }
-    public void setNoiseFloors(List<NoiseFloor> noiseFloors) { this.noiseFloors = noiseFloors; }
+    //public void setNoiseFloors(List<NoiseFloor> noiseFloors) { this.noiseFloors = noiseFloors; }
     public void setOfficeRecommendation(OfficeRecommendation officeRecommendation) { this.officeRecommendation = officeRecommendation; }
 }
 
