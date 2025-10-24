@@ -12,7 +12,12 @@ import org.springframework.http.HttpStatus;
 public enum SuccessStatus implements BaseCode {
 
     // enum중 하나 _OK 이라는 이넘값
-    _OK(HttpStatus.OK, "2000", "Ok"),;
+    _OK(HttpStatus.OK, "2000", "Ok"),
+    
+    // Auth 관련 성공
+    SIGNUP_SUCCESS(HttpStatus.CREATED, "AUTH2001", "회원가입 성공"),
+    LOGIN_SUCCESS(HttpStatus.OK, "AUTH2002", "로그인 성공"),
+    MANAGER_CONTACT_FOUND(HttpStatus.OK, "AUTH2003", "관리사무소 연락처 조회 성공");
 
     // 이넘 값도 필드를 가질수 있으며 롬복에 의해 생성자로 주입된다.
     //HttpStatus는 Spring에 내장되어있는 클래스로 우리가 그냥 에러 뱉을때 사용하는 클래스이다.

@@ -17,11 +17,19 @@ public enum ErrorStatus implements BaseErrorCode {
     _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
 
     // For test
-    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트");
+    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트"),
 
-
-    // Member 없음 오류
-//    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4001", "사용자가 없습니다");
+    // Authentication 관련 오류
+    USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTH4001", "사용자를 찾을 수 없습니다"),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH4002", "비밀번호가 일치하지 않습니다"),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "AUTH4003", "이미 존재하는 닉네임입니다"),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH4004", "비밀번호가 일치하지 않습니다"),
+    INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "AUTH4005", "비밀번호 형식이 올바르지 않습니다"),
+    
+    // Apartment 관련 오류
+    APARTMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "APT4001", "아파트를 찾을 수 없습니다"),
+    APT_UNIT_NOT_FOUND(HttpStatus.BAD_REQUEST, "APT4002", "세대 정보를 찾을 수 없습니다"),
+    MANAGER_NOT_FOUND(HttpStatus.BAD_REQUEST, "APT4003", "관리사무소 정보를 찾을 수 없습니다");
 
 
     private final HttpStatus httpStatus;
