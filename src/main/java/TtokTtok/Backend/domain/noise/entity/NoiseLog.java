@@ -1,4 +1,4 @@
-package TtokTtok.Backend.domain.noise;
+package TtokTtok.Backend.domain.noise.entity;
 
 import TtokTtok.Backend.common.BaseEntity;
 import TtokTtok.Backend.domain.user.User;

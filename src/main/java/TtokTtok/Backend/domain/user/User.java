@@ -2,6 +2,7 @@ package TtokTtok.Backend.domain.user;
 
 import TtokTtok.Backend.common.BaseEntity;
 import TtokTtok.Backend.domain.complex.AptUnit;
+import TtokTtok.Backend.domain.noise.entity.NoiseLog;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class User extends BaseEntity {
     private List<TtokTtok.Backend.domain.community.Reaction> reactions;
 
     @OneToMany(mappedBy = "user")
-    private List<TtokTtok.Backend.domain.noise.NoiseLog> noiseLogs;
+    private List<NoiseLog> noiseLogs;
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private TrustIndex trustIndexDetail;
