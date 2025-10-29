@@ -1,11 +1,19 @@
 package TtokTtok.Backend.domain.knock;
 
 import TtokTtok.Backend.common.BaseEntity;
+import TtokTtok.Backend.common.enums.NoiseCategory;
 import TtokTtok.Backend.domain.user.User;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "KNOCK_REQUEST")
+@Getter
+@Setter
 public class KnockRequest extends BaseEntity{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "request_id")
@@ -18,8 +26,9 @@ public class KnockRequest extends BaseEntity{
     @Column(name = "request_time", nullable = false)
     private java.time.LocalDateTime requestTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "noise_category", length = 30, nullable = false)
-    private String noiseCategory;
+    private NoiseCategory noiseCategory;
 
     @Column(name = "location_scope")
     private Integer locationScope;
@@ -33,22 +42,14 @@ public class KnockRequest extends BaseEntity{
     @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
     private KnockResult result;
 
-    public Long getId() { return id; }
-    public User getRequester() { return requester; }
-    public java.time.LocalDateTime getRequestTime() { return requestTime; }
-    public String getNoiseCategory() { return noiseCategory; }
-    public Integer getLocationScope() { return locationScope; }
-    public Integer getDuration() { return duration; }
-    public Boolean getIsActive() { return isActive; }
-    public KnockResult getResult() { return result; }
-    public void setId(Long id) { this.id = id; }
-    public void setRequester(User requester) { this.requester = requester; }
-    public void setRequestTime(java.time.LocalDateTime requestTime) { this.requestTime = requestTime; }
-    public void setNoiseCategory(String noiseCategory) { this.noiseCategory = noiseCategory; }
-    public void setLocationScope(Integer locationScope) { this.locationScope = locationScope; }
-    public void setDuration(Integer duration) { this.duration = duration; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-    public void setResult(KnockResult result) { this.result = result; }
+    // --- 신규 필드 추가 ---
+    @OneToMany(mappedBy = "knockRequest", cascade = CascadeType.ALL)
+    private List<KnockNotificationTarget> notificationTargets = new ArrayList<>();
+
+    // --- knockReport 필드 추가 (1:1 관계) ---
+    @OneToOne(mappedBy = "knockRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private KnockReport knockReport;
+
 }
 
 

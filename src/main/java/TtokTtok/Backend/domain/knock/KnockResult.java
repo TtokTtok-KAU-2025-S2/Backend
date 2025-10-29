@@ -26,9 +26,6 @@ public class KnockResult extends BaseEntity {
     @Column(name = "peaceful_count")
     private Integer peacefulCount;
 
-    @Lob
-    @Column(name = "analysis")
-    private String analysis;
 
     public Long getId() { return id; }
     public KnockRequest getRequest() { return request; }
@@ -36,14 +33,12 @@ public class KnockResult extends BaseEntity {
     public Integer getHeardCount() { return heardCount; }
     public Integer getQuietCount() { return quietCount; }
     public Integer getPeacefulCount() { return peacefulCount; }
-    public String getAnalysis() { return analysis; }
     public void setId(Long id) { this.id = id; }
     public void setRequest(KnockRequest request) { this.request = request; }
     public void setTotalResponder(Integer totalResponder) { this.totalResponder = totalResponder; }
     public void setHeardCount(Integer heardCount) { this.heardCount = heardCount; }
     public void setQuietCount(Integer quietCount) { this.quietCount = quietCount; }
     public void setPeacefulCount(Integer peacefulCount) { this.peacefulCount = peacefulCount; }
-    public void setAnalysis(String analysis) { this.analysis = analysis; }
 }
 
 
