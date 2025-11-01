@@ -16,13 +16,10 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
 
-    @CreatedDate // 생성 시간 자동 주입
-    @Column(name = "created_at", nullable = false, updatable = false) // 생성 시간은 업데이트 불가로 설정하는 것이 일반적
-    protected LocalDateTime createdAt;
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    @LastModifiedDate // 수정 시간 자동 주입
-    @Column(name = "modified_at", nullable = false)
-    protected LocalDateTime modifiedAt;
-
-    // 수동 getters/setters는 @Getter 어노테이션이 대신하므로 제거
+    @LastModifiedDate
+    private LocalDateTime modifiedAt;
 }
