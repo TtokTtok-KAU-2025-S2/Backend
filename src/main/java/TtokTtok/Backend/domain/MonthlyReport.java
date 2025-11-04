@@ -52,4 +52,6 @@ public class MonthlyReport extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String aiAnalysisText;
 
+    private LocalDateTime deletedAt; // Soft Delete용
+
 }

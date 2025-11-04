@@ -68,3 +68,12 @@ jobs:
             region: ap-northeast-2
             deployment_package: deploy/deploy.zip
             wait_for_deployment: false
+
+            option_settings: |
+              [
+                {
+                  "namespace": "aws:elasticbeanstalk:application:environment",
+                  "option_name": "GOOGLE_API_KEY",
+                  "value": "${{ secrets.GOOGLE_API_KEY }}"
+                }
+              ]
