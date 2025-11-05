@@ -29,7 +29,7 @@ public class MonthlyReportCommandServiceImpl implements MonthlyReportCommandServ
     private final ApartmentRepository apartmentRepository;
     private final NoiseDiaryRepository noiseDiaryRepository;
     private final MonthlyReportRepository monthlyReportRepository;
-    private final AiService aiService;
+//    private final AiService aiService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -87,7 +87,10 @@ public class MonthlyReportCommandServiceImpl implements MonthlyReportCommandServ
         log.info("==========================================");
 
         // 8. Gemini AI 호출
-        String aiSummary = aiService.getMonthlyReportSummary(aiPromptData);
+        String aiSummary;
+        log.warn("🚨 AI 요약 생성 실패 (Apt ID: {}). 임시 텍스트로 대체합니다. 원인: {}", apartment.getId());
+            // ❌ AI가 실패하면 이 임시 텍스트를 저장하고 다음 단계로 진행
+        aiSummary = String.format("%d년 %d월 리포트 (AI 호출 실패/우회)", year, month);
 
         // 9. 엔티티 생성
         MonthlyReport report = MonthlyReport.builder()

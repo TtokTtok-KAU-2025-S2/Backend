@@ -6,8 +6,8 @@ import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.noise.dto.NoiseRecordDTO;
 import TtokTtok.Backend.domain.noise.dto.NoiseRecordUpdateDTO;
-import TtokTtok.Backend.domain.noise.repository.NoiseDiaryRepository;
-import TtokTtok.Backend.domain.user.UserRepository;
+import TtokTtok.Backend.repository.NoiseDiaryRepository;
+import TtokTtok.Backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

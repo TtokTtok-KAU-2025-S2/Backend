@@ -3,8 +3,9 @@ package TtokTtok.Backend.domain.noise.service;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.noise.dto.NoiseCalendarDTO;
-import TtokTtok.Backend.domain.noise.repository.NoiseDiaryRepository;
-import TtokTtok.Backend.domain.user.UserRepository;
+
+import TtokTtok.Backend.repository.NoiseDiaryRepository;
+import TtokTtok.Backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
