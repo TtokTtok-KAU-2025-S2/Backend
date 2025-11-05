@@ -33,7 +33,7 @@ spring:
           starttls:
             enable: true
 
-<<<<<<< HEAD
+
 jwt:
   secret: ${JWT_KEY}
   access-token-validity-in-seconds: 3600
@@ -53,7 +53,7 @@ jwt:
               # 3. 모델명 (요청하신 2.5 Flash)
               model: "gemini-2.5-flash-latest"
               temperature: 0.4
-=======
+
   # --- JWT 설정 ---
   jwt:
     secret: "VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa"
@@ -71,4 +71,4 @@ jwt:
 #            options:
 #              model: "gemini-2.5-flash-latest"
 #              temperature: 0.4
->>>>>>> 3e491a0367d2ae575d3bd4d962c3f9d29b63845a
+
