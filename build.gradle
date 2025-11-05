@@ -22,15 +22,24 @@ configurations {
 
 repositories {
 	mavenCentral()
+	// M2 버전을 받기 위해 milestone과 snapshot 저장소 모두 추가
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
 }
+
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Swagger는 springdoc 하나만 사용 (Spring Boot 3 호환)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.3'
-	implementation 'io.springfox:springfox-swagger2:2.9.2'
-	implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+	// M2 버전 Vertex AI 스타터 (버전은 BOM이 관리)
+	implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter:1.0.0-M2'
+
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -43,5 +52,5 @@ tasks.named('test') {
 }
 
 jar{
-    enabled = false
+	enabled = false
 }
