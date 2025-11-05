@@ -60,8 +60,8 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'  #fork PR 시에는 배포 스텝을 건너뛰기
         uses: einaregilsson/beanstalk-deploy@v20
         with:
-            aws_access_key: ${{ secrets.AWS_ACTION_ACCESS_KEY_ID }}
-            aws_secret_key: ${{ secrets.AWS_ACTION_SECRET_ACCESS_KEY }}
+#            aws_access_key: ${{ secrets.AWS_ACTION_ACCESS_KEY_ID }}
+#            aws_secret_key: ${{ secrets.AWS_ACTION_SECRET_ACCESS_KEY }}
             application_name: Ttokttok-dev   # 어플 이름
             environment_name: Ttokttok-dev-env    # 환경 이름
             version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
