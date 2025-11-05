@@ -19,8 +19,8 @@ public class PreNoticeConverter {
         LocalDate eventDate = LocalDate.parse(request.getEventDate(), dateFormatter);
 
         String[] times = request.getEventTime().split(" ~ ");
-        LocalTime startTime = LocalTime.parse(times[0]);
-        LocalTime endTime = LocalTime.parse(times[1]);
+        LocalTime startTime = LocalTime.parse(times[0].trim());
+        LocalTime endTime = LocalTime.parse(times[1].trim());
 
         return PreNotice.builder()
                 .title(request.getTitle())

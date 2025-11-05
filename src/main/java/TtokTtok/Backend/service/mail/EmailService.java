@@ -19,7 +19,7 @@ public class EmailService {
     public void sendTemporaryPasswordEmail(String toEmail, String temporaryPassword) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "URF-8");
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
             mimeMessageHelper.setTo(toEmail);
             mimeMessageHelper.setSubject("[똑똑] 임시 비밀번호 안내");
             mimeMessageHelper.setText("안녕하세요. 똑똑입니다. \n\n요청하신 임시 비밀번호는 " + temporaryPassword + "입니다." +
