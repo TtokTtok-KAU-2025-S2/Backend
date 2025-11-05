@@ -79,6 +79,13 @@ public class MonthlyReportCommandServiceImpl implements MonthlyReportCommandServ
         // 7. AI 프롬프트 생성
         String aiPromptData = buildAiPromptData(totalCount, changeRate, hourlyStats, categoryStats);
 
+        // ------------------------------------
+// [AI 디버깅용 로그 추가]
+// ------------------------------------
+        log.info("===== AI 프롬프트 전송 데이터 (Apt ID: {}) =====", apartment.getId());
+        log.info(aiPromptData);
+        log.info("==========================================");
+
         // 8. Gemini AI 호출
         String aiSummary = aiService.getMonthlyReportSummary(aiPromptData);
 

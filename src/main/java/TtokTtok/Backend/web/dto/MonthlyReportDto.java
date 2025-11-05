@@ -20,26 +20,15 @@ public class MonthlyReportDto {
     @Getter
     @Builder
     public static class MonthlyReportResponse {
-        // "2024년 10월"
         private String reportTitle;
-
-        // "이달의 소음 리포트" (e.g., 47건)
         private Integer totalReportCount;
-
-        // "전월 대비 감소" (e.g., -12.0)
         private BigDecimal changeRate;
-
-        // "AI 분석 요약" (e.g., "이번 달 우리 아파트의 소음 민원은...")
-        private String aiAnalysisText;
-
-        // "주요 소음 발생 시간대" (JSON -> Map 변환)
+        private String aiAnalysisText; // (AI가 생성한 요약)
         private Map<String, Long> hourlyStats;
-
-        // "소음 유형 분포" (JSON -> Map 변환)
         private Map<String, Long> categoryStats;
 
         // ------------------------------------
-        // [Converter] Entity -> DTO 변환
+        // [Converter] Entity -> DTO 변환 (다시 추가)
         // ------------------------------------
         public static MonthlyReportResponse fromEntity(MonthlyReport report, ObjectMapper objectMapper) {
             Map<String, Long> hourlyStats = parseJsonToMap(report.getHourlyStatsJson(), objectMapper);
@@ -49,7 +38,7 @@ public class MonthlyReportDto {
                     .reportTitle(report.getYear() + "년 " + report.getMonth() + "월")
                     .totalReportCount(report.getTotalReportCount())
                     .changeRate(report.getChangeRate())
-                    .aiAnalysisText(report.getAiAnalysisText())
+                    .aiAnalysisText(report.getAiAnalysisText()) // (AI 요약)
                     .hourlyStats(hourlyStats)
                     .categoryStats(categoryStats)
                     .build();
