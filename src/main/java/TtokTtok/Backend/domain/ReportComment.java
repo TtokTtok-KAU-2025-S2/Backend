@@ -26,4 +26,8 @@ public class ReportComment extends BaseEntity {
 
     @Column(length = 500, nullable = false)
     private String content;
+
+     public void updateContent(String content) {
+        this.content = content;
+     }
 }

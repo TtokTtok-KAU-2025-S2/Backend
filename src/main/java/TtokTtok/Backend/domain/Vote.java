@@ -28,4 +28,8 @@ public class Vote extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private VoteType type;
+
+    public void updateType(VoteType type) {
+        this.type = type;
+    }
 }
