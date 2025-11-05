@@ -35,12 +35,14 @@ public enum ErrorStatus implements BaseErrorCode {
 
 
     // For test
-    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트");
+    TEMP_EXCEPTION(HttpStatus.BAD_REQUEST, "TEMP4001", "이거는 테스트"),
 
 
     // Member 없음 오류
 //    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4001", "사용자가 없습니다");
 
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다."),
+    APARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APARTMENT4001", "존재하지 않는 아파트 ID입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
