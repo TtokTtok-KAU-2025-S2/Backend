@@ -32,7 +32,7 @@ spring:
             enable: true
 
 jwt:
-  secret: "VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa"
+  secret: ${JWT_KEY}
   access-token-validity-in-seconds: 3600
   refresh-token-validity-in-seconds: 86400
   

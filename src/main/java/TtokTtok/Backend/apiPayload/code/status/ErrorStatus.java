@@ -41,8 +41,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // Member 없음 오류
 //    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4001", "사용자가 없습니다");
 
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다."),
-    APARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APARTMENT4001", "존재하지 않는 아파트 ID입니다.");
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
@@ -51,8 +50,8 @@ public enum ErrorStatus implements BaseErrorCode {
     @Override
     public ErrorReasonDTO getReason() {
         return ErrorReasonDTO.builder()
-                .message(message)
-                .code(code)
+                .message(this.message)
+                .code(this.code)
                 .isSuccess(false)
                 .build();
     }
@@ -60,10 +59,10 @@ public enum ErrorStatus implements BaseErrorCode {
     @Override
     public ErrorReasonDTO getReasonHttpStatus() {
         return ErrorReasonDTO.builder()
-                .message(message)
-                .code(code)
+                .message(this.message)
+                .code(this.code)
                 .isSuccess(false)
-                .httpStatus(httpStatus)
+                .httpStatus(this.httpStatus)
                 .build();
     }
 }
