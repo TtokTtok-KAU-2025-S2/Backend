@@ -75,7 +75,7 @@ public class NoiseReportServiceImpl implements NoiseReportService {
         return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary,  voteCounts, commentDtos);
     }
 
-}
+}  
 
 
 
