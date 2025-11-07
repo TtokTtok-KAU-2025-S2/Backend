@@ -57,7 +57,6 @@ public class NoiseRecordCreateDTO {
         // 5단계: 누락된 필수 필드 기본값 설정 (현황판에 등록하지 않는 상태)
         record.setReportYn(false);
         record.setReportedAt(null);
-        record.setDeleted(false);
 
         // NOTE: createdAt은 Service에서 설정
 

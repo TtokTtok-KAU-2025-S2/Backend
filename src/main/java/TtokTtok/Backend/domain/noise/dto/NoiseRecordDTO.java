@@ -17,7 +17,7 @@ public class NoiseRecordDTO {
    // private Long userId;
     private Long noiseId;          // 소음일기 고유 ID
     private NoiseCategory category;           // 소음 카테고리 ( FOOTSTEPS, HAMMERING, FURNITURE, MUSIC, UNKNOWN )
-    private LocalDateTime createdAt;          // 소음 생성 시각
+    private LocalDateTime occuredAt;          // 소음 생성 시각
     private NoiseGrade noiseGrade;           //소음 등급(QUIET, NORMAL, LOUD)
     private BigDecimal dbHigh;              // 최대 데시벨
     private BigDecimal dbAvg;              // 평균 데시벨

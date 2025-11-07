@@ -153,8 +153,6 @@ public class NoiseRecordController {
             // ex) @PatchMapping("/{userId}/{recordId}")
             Long userId = 1L; // 임시 하드코딩
 
-            // 실제 삭제 대신 soft delete 수행
-            noiseRecordService.softDeleteNoiseRecord(userId, recordId);
 
             Map<String, Object> result = new HashMap<>();
             result.put("recordId", recordId);
@@ -162,7 +160,7 @@ public class NoiseRecordController {
             Map<String, Object> response = new HashMap<>();
             response.put("isSuccess", true);
             response.put("code", "COMMON200");
-            response.put("message", "삭제 완료(soft delete)");
+            response.put("message", "삭제 완료(hard delete)");
             response.put("result", result);
 
             return ResponseEntity.ok(response);
@@ -190,6 +188,8 @@ public class NoiseRecordController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+
 
     // 오디오 파일 저장을 위한 임시 경로 (실제 프로덕션에서는 S3 등을 사용해야 함)
     private static final String FILE_STORAGE_PATH = "/tmp/noise_audios/";

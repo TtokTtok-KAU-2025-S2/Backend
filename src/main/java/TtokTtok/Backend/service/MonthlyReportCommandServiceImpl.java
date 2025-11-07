@@ -54,12 +54,12 @@ public class MonthlyReportCommandServiceImpl implements MonthlyReportCommandServ
         LocalDateTime endTime = startTime.plusMonths(1).minusNanos(1);
 
         // 2. 총 건수
-        Integer totalCount = noiseDiaryRepository.countByApartmentAndReportedAtBetween(apartment, startTime, endTime);
+        Integer totalCount = noiseDiaryRepository.countByUser_ApartmentAndReportedAtBetween(apartment, startTime, endTime);
 
         // 3. 전월 건수
         LocalDateTime prevStartTime = startTime.minusMonths(1);
         LocalDateTime prevEndTime = endTime.minusMonths(1);
-        Integer prevTotalCount = noiseDiaryRepository.countByApartmentAndReportedAtBetween(apartment, prevStartTime, prevEndTime);
+        Integer prevTotalCount = noiseDiaryRepository.countByUser_ApartmentAndReportedAtBetween(apartment, prevStartTime, prevEndTime);
 
         // 4. 증감률 계산
         BigDecimal changeRate = calculateChangeRate(totalCount, prevTotalCount);

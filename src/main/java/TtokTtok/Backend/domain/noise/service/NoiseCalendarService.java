@@ -70,7 +70,7 @@ public class NoiseCalendarService {
 
         // 하루 동안의 일기 (생성 시간 기준 오름차순, soft delete 제외)
         List<NoiseDiary> diaries = noiseDiaryRepository
-                .findByUserAndCreatedAtBetweenAndDeletedFalseOrderByCreatedAtAsc(
+                .findByUserAndCreatedAtBetweenOrderByCreatedAtAsc(
                         user,
                         startDateTime,
                         endDateTime

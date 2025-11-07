@@ -1,7 +1,5 @@
 package TtokTtok.Backend.domain.noise.service;
 
-import TtokTtok.Backend.common.enums.NoiseCategory;
-import TtokTtok.Backend.common.enums.NoiseGrade;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.noise.dto.NoiseRecordCreateDTO;
@@ -37,7 +35,7 @@ public class NoiseRecordService {
     // 총 소음 기록 수 조회
     public long getTotalCount(Long userId) {
         User user = getUser(userId);
-        return noiseDiaryRepository.countByUserAndDeletedFalse(user);
+        return noiseDiaryRepository.countByUser(user);
     }
 
     // 특정 달 소음 기록 수 조회
@@ -48,7 +46,7 @@ public class NoiseRecordService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = startDate.withDayOfMonth(startDate.lengthOfMonth()).atTime(LocalTime.MAX);
 
-        return noiseDiaryRepository.countByUserAndCreatedAtBetweenAndDeletedFalse(user, start, end);
+        return noiseDiaryRepository.countByUserAndCreatedAtBetween(user, start, end);
     }
 
     //전체 평균 dB 조회
@@ -69,7 +67,7 @@ public class NoiseRecordService {
 
         User user = getUser(userId);
 
-        NoiseDiary diary = noiseDiaryRepository.findByIdAndUserAndDeletedFalse(recordId, user)
+        NoiseDiary diary = noiseDiaryRepository.findByIdAndUser(recordId, user)
                 .orElseThrow(() -> new IllegalArgumentException("수정하려는 소음 기록이 존재하지 않습니다."));
 
         // 4. enum 변환 (카테고리 / 등급)
@@ -103,16 +101,21 @@ public class NoiseRecordService {
     }
 
 
-    @Transactional
-    public void softDeleteNoiseRecord(Long userId, Long recordId) {
+    @Transactional // DB 변경을 위해 Transactional 유지
+    public void deleteNoiseRecord(Long userId, Long recordId) { // 메서드 이름을 deleteNoiseRecord로 변경
         User user = getUser(userId);
 
+        // 1. 해당 레코드 조회 (이때, soft delete되지 않은 레코드만 찾던 기존 메서드 이름은 그대로 둡니다.)
         NoiseDiary record = noiseDiaryRepository
-                .findByIdAndUserAndDeletedFalse(recordId, user)
-                .orElseThrow(() -> new IllegalArgumentException("NOISE4006"));
+                .findByIdAndUser(recordId, user)
+                // soft delete 플래그가 true인 레코드는 여전히 찾을 수 없습니다.
+                // 만약 이미 soft delete된 레코드도 삭제하고 싶다면, findByIdAndUser() 같은 메서드를 사용해야 합니다.
+                .orElseThrow(() -> new IllegalArgumentException("NOISE4006: 삭제하려는 소음 기록이 존재하지 않거나 소유자가 다릅니다."));
 
-        record.setDeleted(true);
+        // 2. setDeleted(true) 대신 JPA Repository의 delete() 메서드를 사용하여 DB에서 즉시 삭제
+        noiseDiaryRepository.delete(record); // ⭐ 핵심 수정 부분: DB에서 영구 삭제 ⭐
     }
+
 
     // --- AI 생성 및 최종 저장 기능 (1, 2, 3, 4, 5단계) ---
 
@@ -153,7 +156,6 @@ public class NoiseRecordService {
         noiseDiary.setAudioFilePath(audioFilePath);
 
         // 시스템/기본값 설정
-        noiseDiary.setDeleted(false);
         noiseDiary.setReportYn(false);
 
         // 4. 데이터 저장 (DB 반영)
@@ -177,7 +179,7 @@ public class NoiseRecordService {
 
         // 2. 기록 조회 및 소유자 검증 (삭제되지 않은 기록만 조회)
         NoiseDiary record = noiseDiaryRepository
-                .findByIdAndUserAndDeletedFalse(recordId, user)
+                .findByIdAndUser(recordId, user)
                 .orElseThrow(() -> new IllegalArgumentException("NOISE4006: 해당 소음 기록을 찾을 수 없습니다."));
 
         // 3. 이미 현황판에 등록되었는지 확인
