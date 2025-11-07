@@ -34,17 +34,22 @@ public class Apartment extends BaseEntity {
     // --- 양방향 연관관계 ---
 
     @OneToMany(mappedBy = "apartment")
+    @Builder.Default
     private List<User> userList = new ArrayList<>();
 
     @OneToMany(mappedBy = "apartment")
+    @Builder.Default
     private List<Notice> noticeList = new ArrayList<>();
 
     @OneToMany(mappedBy = "apartment")
+    @Builder.Default
     private List<PreNotice> preNoticeList = new ArrayList<>();
 
     @OneToMany(mappedBy = "apartment")
+    @Builder.Default
     private List<MonthlyReport> monthlyReportList = new ArrayList<>();
 
     @OneToMany(mappedBy = "apartment")
+    @Builder.Default
     private List<ApartmentStat> apartmentStatList = new ArrayList<>();
     }

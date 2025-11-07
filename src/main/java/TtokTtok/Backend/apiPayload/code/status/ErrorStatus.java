@@ -50,8 +50,8 @@ public enum ErrorStatus implements BaseErrorCode {
     @Override
     public ErrorReasonDTO getReason() {
         return ErrorReasonDTO.builder()
-                .message(message)
-                .code(code)
+                .message(this.message)
+                .code(this.code)
                 .isSuccess(false)
                 .build();
     }
@@ -59,10 +59,10 @@ public enum ErrorStatus implements BaseErrorCode {
     @Override
     public ErrorReasonDTO getReasonHttpStatus() {
         return ErrorReasonDTO.builder()
-                .message(message)
-                .code(code)
+                .message(this.message)
+                .code(this.code)
                 .isSuccess(false)
-                .httpStatus(httpStatus)
+                .httpStatus(this.httpStatus)
                 .build();
     }
 }

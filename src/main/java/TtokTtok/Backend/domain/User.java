@@ -48,18 +48,23 @@ public class User extends BaseEntity implements UserDetails {
     // --- 양방향 연관관계 (CascadeType.ALL: 유저 탈퇴 시 작성한 모든 것 삭제) ---
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<NoiseDiary> noiseDiaryList = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Vote> voteList = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<ReportComment> reportCommentList = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Notice> noticeList = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<PreNotice> preNoticeList = new ArrayList<>();
 
     //비밀번호 변경
@@ -76,6 +81,11 @@ public class User extends BaseEntity implements UserDetails {
         return roles.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
     }
 
     @Override
