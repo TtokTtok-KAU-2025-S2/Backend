@@ -18,11 +18,9 @@ public class NoiseReportController {
     @GetMapping
     public ApiResponse<NoiseReportResponse.NoiseReportListResponse> getNoiseReportList(
             @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "filter", required = false) String filter) { // filter=my_dong
+            @RequestParam(name = "size", defaultValue = "10") Integer size) { // filter=my_dong
         Pageable pageable = PageRequest.of(page, size);
-        Boolean filterByMyDong = "my_dong".equalsIgnoreCase(filter);
-        NoiseReportResponse.NoiseReportListResponse response = noiseReportService.getNoiseReportList(pageable, filterByMyDong);
+        NoiseReportResponse.NoiseReportListResponse response = noiseReportService.getNoiseReportList(pageable);
         return ApiResponse.onSuccess(response);
     }
 
