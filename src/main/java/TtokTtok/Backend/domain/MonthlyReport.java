@@ -54,4 +54,14 @@ public class MonthlyReport extends BaseEntity {
 
     private LocalDateTime deletedAt; // Soft Delete용
 
+    public void updateReportData(Integer totalCount, BigDecimal changeRate,
+                                 String hourlyStatsJson, String categoryStatsJson,
+                                 String aiSummary) {
+        this.totalReportCount = totalCount;
+        this.changeRate = changeRate;
+        this.hourlyStatsJson = hourlyStatsJson;
+        this.categoryStatsJson = categoryStatsJson;
+        this.aiAnalysisText = aiSummary;
+    }
+
 }
