@@ -1,7 +1,6 @@
 package TtokTtok.Backend.apiPayload;
 
 import TtokTtok.Backend.apiPayload.code.BaseCode;
-import TtokTtok.Backend.apiPayload.code.ReasonDTO;
 import TtokTtok.Backend.apiPayload.code.status.SuccessStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,8 +29,7 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> of(BaseCode code, T result){
-        ReasonDTO reason = code.getReasonHttpStatus();
-        return new ApiResponse<>(true, reason.getCode() , reason.getMessage(), result);
+        return new ApiResponse<>(true, code.getReasonHttpStatus().getCode() , code.getReasonHttpStatus().getMessage(), result);
     }
 
 

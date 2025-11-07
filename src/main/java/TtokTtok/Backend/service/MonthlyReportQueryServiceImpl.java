@@ -1,11 +1,11 @@
 package TtokTtok.Backend.service;
 
-import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
-import TtokTtok.Backend.apiPayload.exception.GeneralException;
-import TtokTtok.Backend.domain.MonthlyReport; // 1. (수정) MonthlyReport 엔티티 Import
-import TtokTtok.Backend.repository.MonthlyReportRepository; // 2. (수정) MonthlyReportRepository Import
+import TtokTtok.Backend.domain.Apartment;
+import TtokTtok.Backend.domain.MonthlyReport;
+import TtokTtok.Backend.repository.ApartmentRepository;
+import TtokTtok.Backend.repository.MonthlyReportRepository;
 import TtokTtok.Backend.web.dto.MonthlyReportDto;
-import com.fasterxml.jackson.databind.ObjectMapper; // 3. DTO 변환을 위해 ObjectMapper 주입
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,30 +14,28 @@ import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // '조회' 전용
+@Transactional(readOnly = true) // '조회' 전용이므로 readOnly=true
 public class MonthlyReportQueryServiceImpl implements MonthlyReportQueryService {
 
-    // (수정) MonthlyReportRepository 주입
     private final MonthlyReportRepository monthlyReportRepository;
-    private final ObjectMapper objectMapper;
-    // (NoiseDiaryRepository, ApartmentRepository 제거)
+    private final ApartmentRepository apartmentRepository; // (아파트 ID 검증용 - 선택 사항)
+    private final ObjectMapper objectMapper; // DTO 변환 시 JSON 파싱용
 
     @Override
     public MonthlyReportDto.MonthlyReportResponse getMonthlyReport(Long apartmentId, LocalDate targetDate) {
 
-        // 1. 조회할 년/월 계산
         int year = targetDate.getYear();
         int month = targetDate.getMonthValue();
 
-        // 2. (수정) "미리 생성된" MonthlyReport를 조회
-        // (CommandService가 생성한 AI 요약본이 담긴 데이터를 여기서 읽음)
-        MonthlyReport report = monthlyReportRepository.findByApartmentIdAndYearAndMonth(apartmentId, year, month)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
+        // 1. 아파트 ID가 유효한지 확인 (선택 사항이지만 권장)
+        // Apartment apartment = apartmentRepository.findById(apartmentId)
+        //         .orElseThrow(() -> new RuntimeException("존재하지 않는 아파트입니다."));
 
-        // 3. (수정) DTO의 fromEntity 헬퍼 메서드를 사용해 변환
-        // (이 과정에서 JSON이 Map으로 파싱됨)
+        // 2. DB에서 해당 아파트의 특정 연/월 리포트를 조회
+        MonthlyReport report = monthlyReportRepository.findByApartmentIdAndYearAndMonth(apartmentId, year, month)
+                .orElseThrow(() -> new RuntimeException(year + "년 " + month + "월의 리포트가 아직 생성되지 않았습니다."));
+
+        // 3. Entity -> DTO로 변환 (JSON 파싱 포함)
         return MonthlyReportDto.MonthlyReportResponse.fromEntity(report, objectMapper);
     }
-
-    // (실시간 집계 헬퍼 메서드(calculateChangeRate, createSimpleAnalysis) 모두 제거)
 }

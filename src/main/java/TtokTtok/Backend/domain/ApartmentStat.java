@@ -32,16 +32,4 @@ public class ApartmentStat extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private String mainNoiseTypesJson;
-
-    // --- (이 메서드를 추가하세요) ---
-    /**
-     * 배치 서비스가 통계 데이터를 업데이트할 때 사용합니다.
-     * @param status (LOW, MEDIUM, HIGH)
-     * @param mainNoiseTypesJson (카테고리 통계 JSON)
-     */
-    public void updateStats(ActivationStatus status, String mainNoiseTypesJson) {
-        this.activationStatus = status;
-        this.mainNoiseTypesJson = mainNoiseTypesJson;
-    }
-    // --- (여기까지) ---
 }

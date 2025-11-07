@@ -2,7 +2,6 @@
 
 package TtokTtok.Backend.common; // 단일화된 패키지 경로
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
@@ -19,10 +18,8 @@ public abstract class BaseEntity {
 
     @CreatedDate
     @Column(updatable = false)
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime modifiedAt;
 }
