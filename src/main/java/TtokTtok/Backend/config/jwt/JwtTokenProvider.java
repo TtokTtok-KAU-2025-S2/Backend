@@ -10,8 +10,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -27,15 +27,18 @@ public class JwtTokenProvider {
     private final Key key;
     private final long accessTokenValidityInSeconds;
     private final long refreshTokenValidityInSeconds;
+    private final UserDetailsService userDetailsService;
 
     public JwtTokenProvider(@Value("VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa") String secretKey,
                             @Value("3600") long accessTokenValidity,
-                            @Value("86400") long refreshTokenValidity)
+                            @Value("86400") long refreshTokenValidity,
+                            UserDetailsService userDetailsService)
     {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityInSeconds = accessTokenValidity * 1000;
         this.refreshTokenValidityInSeconds = refreshTokenValidity * 1000;
+        this.userDetailsService = userDetailsService;
     }
     public TokenInfo generateToken(Authentication authentication) {
         //권한 가져오기
@@ -67,7 +70,7 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    //JWT 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
+    // JWT 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
     public Authentication getAuthentication(String accessToken) {
         //토큰 복호화
         Claims claims = parseClaims(accessToken);
@@ -76,15 +79,15 @@ public class JwtTokenProvider {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
 
-        // 클레임에서 권한 정보 가져오기
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("auth").toString().split(","))
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+        // (기존 코드 삭제)
+        // Collection<? extends GrantedAuthority> authorities = ...
+        // UserDetails principal = new User(claims.getSubject(), "", authorities);
 
-        // UserDetails 객체를 만들어서 Authentication 리턴
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, "",authorities);
+        // 6. (수정) DB에서 "진짜" UserDetails(TtokTtok.Backend.domain.User)를 가져옴
+        UserDetails principal = userDetailsService.loadUserByUsername(claims.getSubject());
+
+        // 7. (수정) principal.getAuthorities()를 사용하여 권한 설정
+        return new UsernamePasswordAuthenticationToken(principal, "", principal.getAuthorities());
     }
 
     // 토큰 정보 검증하는 메서드

@@ -1,7 +1,7 @@
 package TtokTtok.Backend.web.controller;
 
 import TtokTtok.Backend.apiPayload.ApiResponse;
-import TtokTtok.Backend.service.MonthlyReportCommandService; // 1. CommandService 임포트
+import TtokTtok.Backend.service.MonthlyReportCommandService;
 import TtokTtok.Backend.service.MonthlyReportQueryService;
 import TtokTtok.Backend.service.ApartmentStatCommandService;
 import TtokTtok.Backend.web.dto.MonthlyReportDto;
@@ -9,12 +9,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping; // 2. PostMapping 임포트
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+
+// 1. Spring Security의 @AuthenticationPrincipal 임포트
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+// 2. User 엔티티 임포트 (UserDetails를 구현한 클래스)
+import TtokTtok.Backend.domain.User;
+// ------------------- (수정) -------------------
+// 3. 널 체크를 위한 예외 클래스 임포트
+import TtokTtok.Backend.apiPayload.exception.GeneralException;
+import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
+// ---------------------------------------------
+
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +33,7 @@ import java.time.LocalDate;
 public class MonthlyReportController {
 
     private final MonthlyReportQueryService monthlyReportQueryService;
-    private final MonthlyReportCommandService monthlyReportCommandService; // 3. CommandService 주입
+    private final MonthlyReportCommandService monthlyReportCommandService;
     private final ApartmentStatCommandService apartmentStatCommandService;
 
     /**
@@ -30,13 +41,15 @@ public class MonthlyReportController {
      */
     @GetMapping("/monthly")
     public ResponseEntity<ApiResponse<MonthlyReportDto.MonthlyReportResponse>> getMonthlyReport(
-            @RequestParam("aptId") Long apartmentId,
+            // 이 파라미터는 User가 UserDetails를 구현했기 때문에 올바릅니다.
+            @AuthenticationPrincipal User user,
             @RequestParam(value = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
 
-        // (QueryService가 MonthlyReport 테이블을 조회)
+        Long apartmentId = user.getApartment().getId();
+
         MonthlyReportDto.MonthlyReportResponse response =
                 monthlyReportQueryService.getMonthlyReport(apartmentId, targetDate);
 
@@ -47,12 +60,11 @@ public class MonthlyReportController {
     // [임시 테스트용] 월간 리포트 수동 생성 배치 컨트롤러
     // (테스트 후 삭제하세요)
     // ---------------------------------------------------------------------
-    @PostMapping("/admin/generate-batch") // 4. POST 메서드로 새 엔드포인트 추가
+    @PostMapping("/admin/generate-batch")
     public ResponseEntity<ApiResponse<String>> runBatch(
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate
     ) {
         try {
-            // 5. CommandService의 AI 배치 실행
             monthlyReportCommandService.generateMonthlyReports(targetDate);
 
             String message = targetDate.getYear() + "년 " + targetDate.getMonthValue() + "월 리포트 생성 완료";
@@ -67,12 +79,11 @@ public class MonthlyReportController {
     // [임시 테스트용] 전국 아파트 통계 수동 생성
     // (테스트 후 이 메서드를 삭제하세요)
     // ---------------------------------------------------------------------
-    @PostMapping("/admin/generate-stat-batch") // 4. (추가) "generate-stat-batch" 엔드포인트
+    @PostMapping("/admin/generate-stat-batch")
     public ResponseEntity<ApiResponse<String>> runStatBatch(
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate
     ) {
         try {
-            // 5. (추가) ApartmentStatCommandService 실행
             apartmentStatCommandService.updateNationwideStats(targetDate);
 
             String message = targetDate.minusMonths(1).getMonthValue() + "월 기준 전국 통계 생성 완료";

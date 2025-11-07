@@ -109,17 +109,26 @@ public class MonthlyReportCommandServiceImpl implements MonthlyReportCommandServ
             aiSummary = String.format("%d년 %d월 리포트 요약 생성에 실패했습니다. 관리자에게 문의하세요.", year, month);
         }
 
-        // 9. 엔티티 생성
-        MonthlyReport report = MonthlyReport.builder()
-                .apartment(apartment)
-                .year(year)
-                .month(month)
-                .totalReportCount(totalCount)
-                .changeRate(changeRate)
-                .hourlyStatsJson(hourlyStatsJson)
-                .categoryStatsJson(categoryStatsJson)
-                .aiAnalysisText(aiSummary) // AI가 생성했거나, 실패 시 임시 텍스트 저장
-                .build();
+        // (참고: monthlyReportRepository에 findByApartmentIdAndYearAndMonth 메서드가 정의되어 있어야 함)
+        MonthlyReport report = monthlyReportRepository
+                .findByApartmentIdAndYearAndMonth(apartment.getId(), year, month)
+                .orElseGet(() -> MonthlyReport.builder() // 없으면 새로 생성 (키 값만)
+                        .apartment(apartment)
+                        .year(year)
+                        .month(month)
+                        .build());
+
+        // ------------------------------------
+        // ✨ 10. (수정) 엔티티 데이터 업데이트
+        // (참고: MonthlyReport 엔티티에 updateReportData 헬퍼 메서드 추가 필요)
+        // ------------------------------------
+        report.updateReportData(
+                totalCount,
+                changeRate,
+                hourlyStatsJson,
+                categoryStatsJson,
+                aiSummary
+        );
 
         // 10. DB 저장
         monthlyReportRepository.save(report);
