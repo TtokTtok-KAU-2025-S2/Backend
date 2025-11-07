@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 public enum SuccessStatus implements BaseCode {
 
     // enum중 하나 _OK 이라는 이넘값
-    _OK(HttpStatus.OK, "2000", "Ok"),;
+    _OK(HttpStatus.OK, "2000", "Ok");
 
     // 이넘 값도 필드를 가질수 있으며 롬복에 의해 생성자로 주입된다.
     //HttpStatus는 Spring에 내장되어있는 클래스로 우리가 그냥 에러 뱉을때 사용하는 클래스이다.
@@ -28,8 +28,8 @@ public enum SuccessStatus implements BaseCode {
     @Override
     public ReasonDTO getReason() {
         return ReasonDTO.builder()
-                .code(message)
-                .message(code)
+                .code(code)
+                .message(message)
                 .isSuccess(true)
                 .build();
     }
@@ -37,8 +37,8 @@ public enum SuccessStatus implements BaseCode {
     @Override
     public ReasonDTO getReasonHttpStatus() {
         return ReasonDTO.builder()
-                .code(message)
-                .message(code)
+                .code(code)
+                .message(message)
                 .isSuccess(true)
                 .httpStatus(httpStatus)
                 .build();
