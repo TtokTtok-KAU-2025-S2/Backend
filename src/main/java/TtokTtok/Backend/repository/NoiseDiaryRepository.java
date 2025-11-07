@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
 public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
@@ -116,4 +117,6 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+
+
 }

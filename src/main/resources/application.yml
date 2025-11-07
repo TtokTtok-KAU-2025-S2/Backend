@@ -1,31 +1,29 @@
 spring:
-  application:
-    name: Backend
-
-  # --- DB 설정 ---
   datasource:
     url: jdbc:mysql://dev-ttokttok.cjyuygmyir9b.ap-northeast-2.rds.amazonaws.com:3306/ttokttok
     username: root
-    password: ${DB_PASSWORD} # ✅ 환경 변수 필요
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  # --- JPA/Hibernate 설정 ---
+  sql:
+    init:
+      mode: never
   jpa:
-    hibernate:
-      ddl-auto: update # 'create' 대신 'update' 사용 (수정됨)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         show_sql: true
         format_sql: true
         use_sql_comments: true
+        hbm2ddl:
+          auto: update
+        default_batch_fetch_size: 1000
 
-  # --- 메일 설정 ---
+
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${SMTP_EMAIL} # ✅ 환경 변수 필요
-    password: ${SMTP_PASSWORD} # ✅ 환경 변수 필요
+    username: ${SMTP_EMAIL}
+    password: ${SMTP_PASSWORD}
     properties:
       mail:
         smtp:
@@ -33,20 +31,7 @@ spring:
           starttls:
             enable: true
 
-  # --- JWT 설정 ---
-  jwt:
-    secret: "VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa"
-    access-token-validity-in-seconds: 3600
-    refresh-token-validity-in-seconds: 86400
-
-#  # --- Spring AI & Vertex AI 설정 (가장 안전한 계층 구조) ---
-#  ai:
-#    vertex:
-#      ai: # ⬅️ 이 계층이 대부분의 Spring AI 버전에서 필요합니다!
-#        project-id: "gen-lang-client-0133965444"
-#        location: "us-central1"
-#        gemini:
-#          chat:
-#            options:
-#              model: "gemini-2.5-flash-latest"
-#              temperature: 0.4
+jwt:
+  secret: ${JWT_KEY}
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 86400

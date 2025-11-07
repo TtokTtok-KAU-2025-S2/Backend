@@ -1,11 +1,13 @@
 package TtokTtok.Backend.domain.noise.controller;
 
-import TtokTtok.Backend.domain.noise.dto.NoiseCalendarDTO;
+import TtokTtok.Backend.domain.noise.dto.DailyNoiseDiaryDTO;
+import TtokTtok.Backend.domain.noise.dto.NoiseMonthlyCalendarDTO;
 import TtokTtok.Backend.domain.noise.service.NoiseCalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -24,7 +26,7 @@ public class NoiseCalendarController {
     ) {
         try {
             // 서비스 호출
-            NoiseCalendarDTO data = noiseCalendarService.getMonthlyNoiseCalendar(userId, year, month);
+            NoiseMonthlyCalendarDTO data = noiseCalendarService.getMonthlyNoiseCalendar(userId, year, month);
 
             // result 구조
             Map<String, Object> result = new LinkedHashMap<>();
@@ -60,14 +62,18 @@ public class NoiseCalendarController {
 
 
     @GetMapping("/details/{userId}")
-    public ResponseEntity<?> getMonthlyNoiseCalendarDetails(
+    public ResponseEntity<?> getDailyNoiseCalendar(
             @PathVariable Long userId,
             @RequestParam int year,
-            @RequestParam int month
+            @RequestParam int month,
+            @RequestParam int day
     ) {
         try {
-            NoiseCalendarDTO data =
-                    noiseCalendarService.getMonthlyNoiseCalendarDetails(userId, year, month);
+            // year, month, day → LocalDate 만들어서 서비스에 넘기기
+            LocalDate date = LocalDate.of(year, month, day);
+
+            DailyNoiseDiaryDTO data =
+                    noiseCalendarService.getDailyNoiseDiary(userId, date);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("userId", userId);

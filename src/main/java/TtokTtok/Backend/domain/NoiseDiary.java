@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
 public class NoiseDiary extends BaseEntity {
 
@@ -27,6 +27,9 @@ public class NoiseDiary extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(length = 512, nullable = true) // S3 URL 또는 로컬 경로를 저장할 충분한 길이
+    private String audioFilePath;
 
     // ERD에 duration이 DATETIME으로 되어있으나, '측정 소요시간'이므로 '초(seconds)' 단위의 Integer로 구현
     @Column(nullable = false)
