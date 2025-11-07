@@ -59,16 +59,6 @@ spring:
   logging:
     level:
       org.springframework.security: DEBUG
+      
 
-#  # --- Spring AI & Vertex AI 설정 (가장 안전한 계층 구조) ---
-#  ai:
-#    vertex:
-#      ai: # ⬅️ 이 계층이 대부분의 Spring AI 버전에서 필요합니다!
-#        project-id: "gen-lang-client-0133965444"
-#        location: "us-central1"
-#        gemini:
-#          chat:
-#            options:
-#              model: "gemini-2.5-flash-latest"
-#              temperature: 0.4
-
+    refresh-token-validity-in-seconds: 86400
