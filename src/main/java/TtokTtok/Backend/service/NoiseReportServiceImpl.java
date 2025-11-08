@@ -62,9 +62,18 @@ public class NoiseReportServiceImpl implements NoiseReportService {
         for (VoteType type : VoteType.values()) {
             voteCounts.put(type, 0L);
         }
-        Map<VoteType, Long> dbVoteCounts = voteRepository.countVotesByTypeForNoiseDiary(noiseDiary);
-        voteCounts.putAll(dbVoteCounts);
+        List<Object[]> dbVoteCounts = voteRepository.countVotesByTypeForNoiseDiary(noiseDiary);
+        //voteCounts.putAll(dbVoteCounts);
+        if (dbVoteCounts != null) {
+            for (Object[] result : dbVoteCounts) {
+                Object key = result[0];
+                Object value = result[1];
 
+                if (key instanceof VoteType && value instanceof Long) {
+                    voteCounts.put((VoteType) key, (Long) value);
+                }
+            }
+        }
         List<ReportComment> comments = reportCommentRepository.findAllByNoiseDiaryOrderByCreatedAtAsc(noiseDiary);
         List<CommentResponse.CommentDto> commentDtos = comments.stream()
                 .map(comment -> {
@@ -76,7 +85,7 @@ public class NoiseReportServiceImpl implements NoiseReportService {
         return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary,  voteCounts, commentDtos);
     }
 
-}  
+}
 
 
 

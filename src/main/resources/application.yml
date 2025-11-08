@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:mysql://dev-ttokttok.cjyuygmyir9b.ap-northeast-2.rds.amazonaws.com:3306/ttokttok
     username: root
-    password: "Pizzalandchickenprincess" # ✅ 환경 변수 필요
+    password: ${DB_PASSWORD} # ✅ 환경 변수 필요
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   # --- JPA/Hibernate 설정 ---
@@ -24,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: "seokjin020128@gmail.com" # ✅ 환경 변수 필요
-    password: "ttrs fvff kaws jqiy" # ✅ 환경 변수 필요
+    username: ${SMTP_EMAIL} # ✅ 환경 변수 필요
+    password: ${SMTP_PASSWORD} # ✅ 환경 변수 필요
     properties:
       mail:
         smtp:
@@ -51,7 +51,7 @@ spring:
 
   # --- JWT 설정 ---
   jwt:
-    secret: "VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa"
+    secret: ${JWT_KEY}
     access-token-validity-in-seconds: 3600
     refresh-token-validity-in-seconds: 86400
 
