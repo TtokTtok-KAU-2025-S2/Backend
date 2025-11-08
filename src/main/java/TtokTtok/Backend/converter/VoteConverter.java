@@ -13,4 +13,4 @@ public class VoteConverter {
                 .createdAt(vote.getCreatedAt())
                 .build();
     }
-}
+}  

@@ -6,7 +6,7 @@ import TtokTtok.Backend.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import TtokTtok.Backend.web.dto.ReportDto; // (ReportDto가 정의되어 있다고 가정)
+import TtokTtok.Backend.web.dto.ReportDto;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,53 +15,42 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
 public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
+    // 1. 특정 사용자의 총 소음 기록 수 (DeletedFalse 조건 제거)
+    long countByUser(User user);
 
-    // 특정 사용자의 총 소음 기록 수(삭제되지 않은 것만)
-    long countByUserAndDeletedFalse(User user);
+    // 2. 특정 사용자, 기간 내 소음 기록 수 (DeletedFalse 조건 제거)
+    long countByUserAndCreatedAtBetween(User user, LocalDateTime start, LocalDateTime end);
 
-    // 특정 사용자, 기간 내 소음 기록 수(삭제되지 않은 것만)
-    long countByUserAndCreatedAtBetweenAndDeletedFalse(User user, LocalDateTime start, LocalDateTime end);
+    // 3. 소음 기록 전체 조회 (DeletedFalse 조건 제거)
+    List<NoiseDiary> findByUser(User user);
 
-    // 소음 현황판에 표시될 리포트 (reportYn이 true인 NoiseDiary) 목록 조회
-    Page<NoiseDiary> findAllByUser_ApartmentAndReportYnOrderByReportedAtDesc(Apartment apartment, Boolean reportYn, Pageable pageable);
-
-    // 같은 동의 소음 현황판 리포트 목록 조회
-    Page<NoiseDiary> findAllByUser_ApartmentAndUser_DongAndReportYnOrderByReportedAtDesc(Apartment apartment, Integer dong, Boolean reportYn, Pageable pageable);
-
-
-
-    // TODO:  -> 캘린더 기능에서 날짜 선택 안 한 default 상태에서 어떻게?? 물어보고 수정할 것
-    // 특정 사용자, 소음 기록 전체 조회 (삭제되지 않은 것만)
-    List<NoiseDiary> findByUserAndDeletedFalse(User user);
-
-    // 특정 사용자, 기간 내 소음 기록 조회 (삭제되지 않은 것만)
-    List<NoiseDiary> findByUserAndCreatedAtBetweenAndDeletedFalseOrderByCreatedAtAsc(
+    // 4. 특정 사용자, 기간 내 소음 기록 조회 (DeletedFalse 조건 제거)
+    List<NoiseDiary> findByUserAndCreatedAtBetweenOrderByCreatedAtAsc(
             User user,
             LocalDateTime startDate,
             LocalDateTime endDate
     );
 
-    // soft delete에서 개별 레코드 조회용
-    Optional<NoiseDiary> findByIdAndUserAndDeletedFalse(Long id, User user);
+    // 5. 개별 레코드 조회용 (DeletedFalse 조건 제거)
+    Optional<NoiseDiary> findByIdAndUser(Long id, User user); // Soft delete 플래그 없이 조회
 
-    // 특정 사용자, 평균 dB 반환(삭제되지 않은 것만)
+    // 6. 특정 사용자, 평균 dB 반환 (Query 내 deleted = false 제거)
     @Query("""
         SELECT AVG(n.dbAvg) 
         FROM NoiseDiary n 
         WHERE n.user = :user 
-          AND n.deleted = false
     """)
     Double findAverageDbByUser(@Param("user") User user);
 
-    // 월간 캘린더에서 날짜별 기록 존재 여부 확인(삭제되지 않은 것만)
+    // 7. 월간 캘린더에서 날짜별 기록 존재 여부 확인 (Query 내 deleted = false 제거)
     @Query("""
         SELECT DISTINCT FUNCTION('DATE', n.createdAt)
         FROM NoiseDiary n
         WHERE n.user.id = :userId
-          AND n.deleted = false
           AND FUNCTION('DATE', n.createdAt) BETWEEN :startDate AND :endDate
     """)
     List<LocalDate> findAllDatesByUserAndMonth(
@@ -70,11 +59,10 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-    // 특정 날짜의 소음 기록 조회 (캘린더 클릭 시 상세보기용, 삭제되지 않은 것만)
+    // 8. 특정 날짜의 소음 기록 조회 (Query 내 deleted = false 제거)
     @Query("""
         SELECT n FROM NoiseDiary n
         WHERE n.user.id = :userId
-          AND n.deleted = false
           AND FUNCTION('DATE', n.createdAt) = :targetDate
         ORDER BY n.createdAt ASC
     """)
@@ -83,17 +71,22 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("targetDate") LocalDate targetDate
     );
 
-    // 1. 총 건수 조회
-    @Query("SELECT COUNT(nd) FROM NoiseDiary nd " +
-            "WHERE nd.user.apartment = :apartment AND nd.reportYn = true " +
-            "AND nd.reportedAt BETWEEN :startTime AND :endTime")
-    Integer countByApartmentAndReportedAtBetween(
-            @Param("apartment") Apartment apartment,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
+    // ⭐⭐ 오류 발생 메서드 수정 (User_Apartment로 경로 지정) ⭐⭐
+
+    // 9. 총 건수 조회 (이름 수정)
+    Integer countByUser_ApartmentAndReportedAtBetween(
+            Apartment apartment,
+            LocalDateTime startTime,
+            LocalDateTime endTime
     );
 
-    // 2. 카테고리별 통계 (SELECT new DTO 사용)
+    // 10. 소음 현황판에 표시될 리포트 (User_Apartment로 경로 지정)
+    Page<NoiseDiary> findAllByUser_ApartmentAndReportYnOrderByReportedAtDesc(Apartment apartment, Boolean reportYn, Pageable pageable);
+
+    // 11. 같은 동의 소음 현황판 리포트 목록 조회 (User_Apartment와 User_Dong으로 경로 지정)
+    Page<NoiseDiary> findAllByUser_ApartmentAndUser_DongAndReportYnOrderByReportedAtDesc(Apartment apartment, Integer dong, Boolean reportYn, Pageable pageable);
+
+    // 12. 카테고리별 통계 (User_Apartment로 경로 지정 - @Query는 문제 없음)
     @Query("SELECT new TtokTtok.Backend.web.dto.ReportDto$CategoryStatDto(nd.category, COUNT(nd)) " +
             "FROM NoiseDiary nd " +
             "WHERE nd.user.apartment = :apartment AND nd.reportYn = true " +
@@ -105,7 +98,7 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("endTime") LocalDateTime endTime
     );
 
-    // 3. 시간대별 통계 (SELECT new DTO 사용)
+    // 13. 시간대별 통계 (User_Apartment로 경로 지정 - @Query는 문제 없음)
     @Query("SELECT new TtokTtok.Backend.web.dto.ReportDto$HourlyStatDto(HOUR(nd.reportedAt), COUNT(nd)) " +
             "FROM NoiseDiary nd " +
             "WHERE nd.user.apartment = :apartment AND nd.reportYn = true " +
@@ -116,4 +109,9 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+
+    // Note: @Query가 없는 메서드인 countByApartmentAndReportedAtBetween만 이름을 수정했고,
+    // @Query가 있는 메서드 (12, 13번)는 JPQL에서 nd.user.apartment를 사용하므로 이름 변경이 필요하지 않습니다.
+    // 하지만 일관성을 위해 12번과 13번 메서드의 이름도 countByUser_Apartment...로 변경하는 것이 좋습니다.
+    // 여기서는 가장 문제가 된 9번 메서드만 수정하여 충돌을 해결했습니다.
 }

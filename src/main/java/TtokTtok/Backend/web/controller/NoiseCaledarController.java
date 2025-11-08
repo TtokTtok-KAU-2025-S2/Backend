@@ -1,30 +1,37 @@
-package TtokTtok.Backend.domain.noise.controller;
+package TtokTtok.Backend.web.controller;
 
-import TtokTtok.Backend.domain.noise.dto.NoiseCalendarDTO;
-import TtokTtok.Backend.domain.noise.service.NoiseCalendarService;
+import TtokTtok.Backend.config.jwt.SecurityUtil; // ⭐ SecurityUtil import
+import TtokTtok.Backend.web.dto.noise.DailyNoiseDiaryDTO;
+import TtokTtok.Backend.web.dto.noise.NoiseMonthlyCalendarDTO;
+import TtokTtok.Backend.service.NoiseCalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/noise/records/calendar")
-public class NoiseCalendarController {
+public class NoiseCaledarController {
 
     private final NoiseCalendarService noiseCalendarService;
 
-    @GetMapping("/{userId}")
+    // 💡 URL에서 /{userId} 제거
+    @GetMapping
     public ResponseEntity<?> getMonthlyNoiseCalendar(
-            @PathVariable Long userId,
+            // 💡 @PathVariable Long userId 제거
             @RequestParam int year,
             @RequestParam int month
     ) {
         try {
-            // 서비스 호출
-            NoiseCalendarDTO data = noiseCalendarService.getMonthlyNoiseCalendar(userId, year, month);
+            // ⭐ JWT 토큰에서 userId 추출
+            Long userId = SecurityUtil.getCurrentUserId();
+
+            // 서비스 호출 (수정된 서비스 메서드 시그니처에 맞춤)
+            NoiseMonthlyCalendarDTO data = noiseCalendarService.getMonthlyNoiseCalendar(year, month);
 
             // result 구조
             Map<String, Object> result = new LinkedHashMap<>();
@@ -58,16 +65,24 @@ public class NoiseCalendarController {
         }
     }
 
-
-    @GetMapping("/details/{userId}")
-    public ResponseEntity<?> getMonthlyNoiseCalendarDetails(
-            @PathVariable Long userId,
+    // 💡 URL에서 /details/{userId} 제거
+    @GetMapping("/details")
+    public ResponseEntity<?> getDailyNoiseCalendar(
+            // 💡 @PathVariable Long userId 제거
             @RequestParam int year,
-            @RequestParam int month
+            @RequestParam int month,
+            @RequestParam int day
     ) {
         try {
-            NoiseCalendarDTO data =
-                    noiseCalendarService.getMonthlyNoiseCalendarDetails(userId, year, month);
+            // ⭐ JWT 토큰에서 userId 추출
+            Long userId = SecurityUtil.getCurrentUserId();
+
+            // year, month, day → LocalDate 만들어서 서비스에 넘기기
+            LocalDate date = LocalDate.of(year, month, day);
+
+            // 서비스 호출 (수정된 서비스 메서드 시그니처에 맞춤)
+            DailyNoiseDiaryDTO data =
+                    noiseCalendarService.getDailyNoiseDiary(date);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("userId", userId);
@@ -99,5 +114,4 @@ public class NoiseCalendarController {
         }
     }
 }
-
 

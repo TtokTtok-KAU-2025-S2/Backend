@@ -50,7 +50,7 @@ public class ApartmentStatCommandServiceImpl implements ApartmentStatCommandServ
         for (Apartment apartment : allApartments) {
             try {
                 // 2. 지난달 총 건수 조회
-                Integer totalCount = noiseDiaryRepository.countByApartmentAndReportedAtBetween(
+                Integer totalCount = noiseDiaryRepository.countByUser_ApartmentAndReportedAtBetween(
                         apartment, startTime, endTime
                 );
                 totalCount = (totalCount == null) ? 0 : totalCount;
