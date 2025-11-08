@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:mysql://dev-ttokttok.cjyuygmyir9b.ap-northeast-2.rds.amazonaws.com:3306/ttokttok
     username: root
-    password: "Pizzalandchickenprincess" # ✅ 환경 변수 필요
+    password: ${DB_PASSWORD} # ✅ 환경 변수 필요
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   # --- JPA/Hibernate 설정 ---
@@ -33,21 +33,6 @@ spring:
           starttls:
             enable: true
 
-  
-  
-  ai:
-    vertex:
-      ai:
-        gemini:
-          # 1. (필수) Google Cloud 프로젝트 ID
-          project-id: "gen-lang-client-0133965444"
-          # 2. (필수) Vertex AI 리전 (예: us-central1)
-          location: "us-central1"
-          chat:
-            options:
-              # 3. 모델명 (요청하신 2.5 Flash)
-              model: "gemini-2.5-flash-latest"
-              temperature: 0.4
 
   # --- JWT 설정 ---
   jwt:

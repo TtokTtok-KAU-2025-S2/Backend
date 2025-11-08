@@ -1,4 +1,4 @@
-package TtokTtok.Backend.domain.noise.controller;
+package TtokTtok.Backend.web.controller;
 
 import TtokTtok.Backend.domain.noise.dto.NoiseRecordUpdateDTO;
 import TtokTtok.Backend.domain.noise.service.NoiseRecordService;
