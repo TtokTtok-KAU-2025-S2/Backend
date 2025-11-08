@@ -5,4 +5,5 @@ import TtokTtok.Backend.web.dto.NoticeRequest;
 
 public interface NoticeService {
     Notice createNotice(NoticeRequest.CreateNoticeDto request);
+    Notice getNotice(Long noticeId);
 }

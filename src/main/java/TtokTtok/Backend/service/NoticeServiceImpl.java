@@ -13,6 +13,8 @@ import TtokTtok.Backend.web.dto.NoticeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
+import TtokTtok.Backend.apiPayload.exception.GeneralException;
 
 @Service
 @Transactional(readOnly = true)
@@ -37,5 +39,11 @@ public class NoticeServiceImpl implements NoticeService {
 
          // 4. NoticeRepository를 사용해 데이터베이스에 저장
          return noticeRepository.save(newNotice);
+     }
+
+     @Override
+     public Notice getNotice(Long noticeId) {
+         return noticeRepository.findById(noticeId)
+                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOTICE_NOT_FOUND));
      }
 }
