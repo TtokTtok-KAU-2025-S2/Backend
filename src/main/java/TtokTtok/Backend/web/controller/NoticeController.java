@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/notice")
@@ -27,6 +29,13 @@ public class NoticeController {
          Notice notice = noticeService.createNotice(request);
          NoticeResponse.NoticeDetailDto responseDto = NoticeConverter.toNoticeDetailDto(notice);
          // 생성된 공지사항의 상세 정보를 응답으로 반환
+         return ResponseEntity.ok(responseDto);
+     }
+
+     @GetMapping("/{noticeId}")
+     public ResponseEntity<NoticeResponse.NoticeDetailDto> getNotice(@PathVariable Long noticeId) {
+         Notice notice = noticeService.getNotice(noticeId);
+         NoticeResponse.NoticeDetailDto responseDto = NoticeConverter.toNoticeDetailDto(notice);
          return ResponseEntity.ok(responseDto);
      }
  }

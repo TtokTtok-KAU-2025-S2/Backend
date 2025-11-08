@@ -32,6 +32,9 @@ public enum ErrorStatus implements BaseErrorCode {
     // 게시글 관련 에러
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT4001", "댓글이 없습니다."),
 
+    // 공지사항 없음
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE4001", "해당 공지사항이 존재하지 않습니다."),
+
 
 
     // For test
