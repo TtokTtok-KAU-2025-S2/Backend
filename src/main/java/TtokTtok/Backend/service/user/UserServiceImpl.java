@@ -9,6 +9,7 @@ import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.repository.ApartmentRepository;
 import TtokTtok.Backend.repository.UserRepository;
 import TtokTtok.Backend.service.mail.EmailService;
+import TtokTtok.Backend.service.user.UserService;
 import TtokTtok.Backend.web.dto.user.UserRequest;
 import TtokTtok.Backend.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,8 @@ public class UserServiceImpl implements UserService {
          Apartment apartment = apartmentRepository.findById(joinDto.getAptId())
                  .orElseThrow(() -> new GeneralException(ErrorStatus.APARTMENT_NOT_FOUND));
 
+         String verificationCode = UUID.randomUUID().toString();
+
          User newUser = User.builder()
                  .email(joinDto.getEmail())
                  .password(passwordEncoder.encode(joinDto.getPassword()))
@@ -49,13 +52,26 @@ public class UserServiceImpl implements UserService {
                  .hosu(joinDto.getHosu())
                  .apartment(apartment)
                  .role(RoleType.USER) // 기본 역할을 USER로 설정
+                 .emailAuthCode(verificationCode)
+                 .emailVerified(false)
                  .build();
 
-         return userRepository.save(newUser);
+         userRepository.save(newUser);
+         emailService.sendVerificationEmail(newUser.getEmail(), verificationCode);
+
+         return newUser;
      }
 
      @Override
      public UserResponse.TokenInfo login(UserRequest.LoginDto loginDto) {
+         User user = userRepository.findByEmail(loginDto.getEmail())
+                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+         // 이메일 인증 여부 확인
+         if (!user.isEmailVerified()) {
+             throw new GeneralException(ErrorStatus.EMAIL_NOT_VERIFIED);
+         }
+
          // 1. Login ID/PW 를 기반으로 Authentication 객체 생성
          UsernamePasswordAuthenticationToken authenticationToken =
                  new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword());
@@ -88,4 +104,17 @@ public class UserServiceImpl implements UserService {
          user.updatePassword(passwordEncoder.encode(passwordResetRequestDto.getNewPassword()));
          userRepository.save(user);
      }
+
+    @Override
+    public void verifyEmail(String email, String code) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        if (user.getEmailAuthCode() != null && user.getEmailAuthCode().equals(code)) {
+            user.verifyEmail();
+            userRepository.save(user);
+        } else {
+            throw new GeneralException(ErrorStatus.INVALID_VERIFICATION_CODE);
+        }
+    }
 }
