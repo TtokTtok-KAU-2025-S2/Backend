@@ -1,6 +1,5 @@
 server:
   port: 5000
-# spring 포트를 5000으로 변경
 
 spring:
   application:
@@ -16,7 +15,7 @@ spring:
   # --- JPA/Hibernate 설정 ---
   jpa:
     hibernate:
-      ddl-auto: update # 'create' 대신 'update' 사용 (수정됨)
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -29,7 +28,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: ${SMTP_EMAIL} # ✅ 환경 변수 필요
-    password:  ${SMTP_PASSWORD}  # ✅ 환경 변수 필요
+    password: ${SMTP_PASSWORD}  # ✅ 환경 변수 필요
     properties:
       mail:
         smtp:
@@ -37,17 +36,12 @@ spring:
           starttls:
             enable: true
 
-
   # --- JWT 설정 ---
   jwt:
-    secret: ${JWT_KEY}
+    secret: ${JWT_KEY} # ✅ 환경 변수 필요
     access-token-validity-in-seconds: 3600
-    refresh-token-validity-in-seconds: 86400
-
+    refresh-token-validity-in-seconds: 86400 # ⚠️ 위치 수정됨
 
   logging:
     level:
       org.springframework.security: DEBUG
-      
-
-    refresh-token-validity-in-seconds: 86400
