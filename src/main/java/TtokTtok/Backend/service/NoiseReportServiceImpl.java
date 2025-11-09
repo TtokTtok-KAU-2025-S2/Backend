@@ -36,19 +36,15 @@ public class NoiseReportServiceImpl implements NoiseReportService {
     private final ReportCommentRepository reportCommentRepository;
 
     @Override
-    public NoiseReportResponse.NoiseReportListResponse getNoiseReportList(Pageable pageable, Boolean filterByMyDong) {
+    public NoiseReportResponse.NoiseReportListResponse getNoiseReportList(Pageable pageable) {
         String userEmail = SecurityUtil.getCurrentUserEmail();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         Page<NoiseDiary> noiseDiaryPage;
-        if (filterByMyDong != null && filterByMyDong) {
-            noiseDiaryPage = noiseDiaryRepository.findAllByUser_ApartmentAndUser_DongAndReportYnOrderByReportedAtDesc(
-                    user.getApartment(), user.getDong(), true, pageable);
-        } else {
-            noiseDiaryPage = noiseDiaryRepository.findAllByUser_ApartmentAndReportYnOrderByReportedAtDesc(
-                    user.getApartment(), true, pageable);
-        }
+        noiseDiaryPage = noiseDiaryRepository.findAllByUser_ApartmentAndUser_DongAndReportYnOrderByReportedAtDesc(
+                user.getApartment(), user.getDong(), true, pageable);
+
 
         return NoiseReportConverter.toNoiseReportListResponse(noiseDiaryPage);
     }
@@ -62,8 +58,22 @@ public class NoiseReportServiceImpl implements NoiseReportService {
         NoiseDiary noiseDiary = noiseDiaryRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.POST_NOT_FOUND));
 
-        Map<VoteType, Long> voteCounts = voteRepository.countVotesByTypeForNoiseDiary(noiseDiary);
+        Map<VoteType, Long> voteCounts = new java.util.EnumMap<>(VoteType.class);
+        for (VoteType type : VoteType.values()) {
+            voteCounts.put(type, 0L);
+        }
+        List<Object[]> dbVoteCounts = voteRepository.countVotesByTypeForNoiseDiary(noiseDiary);
+        //voteCounts.putAll(dbVoteCounts);
+        if (dbVoteCounts != null) {
+            for (Object[] result : dbVoteCounts) {
+                Object key = result[0];
+                Object value = result[1];
 
+                if (key instanceof VoteType && value instanceof Long) {
+                    voteCounts.put((VoteType) key, (Long) value);
+                }
+            }
+        }
         List<ReportComment> comments = reportCommentRepository.findAllByNoiseDiaryOrderByCreatedAtAsc(noiseDiary);
         List<CommentResponse.CommentDto> commentDtos = comments.stream()
                 .map(comment -> {
