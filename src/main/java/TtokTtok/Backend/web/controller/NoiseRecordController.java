@@ -1,6 +1,9 @@
 package TtokTtok.Backend.web.controller;
 
 import TtokTtok.Backend.config.jwt.SecurityUtil;
+import TtokTtok.Backend.web.dto.NoiseDiaryRequestDTO;
+import TtokTtok.Backend.web.dto.NoiseDiaryResponseDTO;
+import TtokTtok.Backend.web.dto.noise.NoiseRecordCreateDTO;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordUpdateDTO;
 import TtokTtok.Backend.service.NoiseRecordService;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordDTO;
@@ -79,6 +82,8 @@ public class NoiseRecordController {
         }
     }
 
+
+
     // ⭐ URL에서 /{userId} 제거
     @GetMapping("/average-db")
     public ResponseEntity<?> getAverageDb() { // ⭐ @PathVariable Long userId 제거
@@ -105,6 +110,50 @@ public class NoiseRecordController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+
+
+    @PostMapping
+    public ResponseEntity<?> createNoiseDiary(@RequestBody NoiseDiaryRequestDTO request) {
+        NoiseDiaryResponseDTO created = noiseRecordService.createNoiseDiary(request);
+
+        Map<String,Object> response = new HashMap<>();
+        response.put("isSuccess", true);
+        response.put("code","COMMON200");
+        response.put("message","소음 기록 생성 완료");
+        response.put("result", created);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    /**
+     * 1) 소음 기록 전송 (reportYn = true, Vote 생성)
+     * @param recordId 전송할 소음 기록 ID
+     */
+    @PostMapping("/{recordId}/send")
+    public ResponseEntity<?> sendNoiseDiary(@PathVariable Long recordId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            noiseRecordService.sendNoiseDiary(recordId);
+
+            response.put("isSuccess", true);
+            response.put("code", "COMMON200");
+            response.put("message", "소음 기록 전송 완료");
+            response.put("result", recordId);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            response.put("isSuccess", false);
+            response.put("code", "NOISE4001");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+
 
 
     //record 하나 update
