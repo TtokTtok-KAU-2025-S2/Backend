@@ -1,5 +1,6 @@
 package TtokTtok.Backend.service;
 
+import TtokTtok.Backend.common.enums.VoteType;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.Vote;
@@ -154,7 +155,7 @@ public class NoiseRecordService {
         Vote vote = Vote.builder()
                 .user(user)
                 .noiseDiary(diary)
-                .type(null)
+                .type(VoteType.NOT_HEARD)
                 .build();
 
 // repository 인스턴스로 저장
@@ -193,6 +194,7 @@ public class NoiseRecordService {
 
         // 7. 응답 DTO로 변환
         return new NoiseRecordDTO(
+                userId,
                 diary.getId(),
                 diary.getCategory(),
                 diary.getOccuredAt() ,

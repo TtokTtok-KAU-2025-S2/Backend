@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NoiseRecordDTO {
-   // private Long userId;
+    private Long userId;
     private Long noiseId;          // 소음일기 고유 ID
     private NoiseCategory category;           // 소음 카테고리 ( FOOTSTEPS, HAMMERING, FURNITURE, MUSIC, UNKNOWN )
     private LocalDateTime occuredAt;          // 소음 생성 시각
