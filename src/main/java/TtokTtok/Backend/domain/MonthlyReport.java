@@ -16,8 +16,6 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE monthly_report SET deleted_at = NOW() WHERE monthly_report_id = ?")
-@Where(clause = "deleted_at IS NULL")
 public class MonthlyReport extends BaseEntity {
 
     @Id
