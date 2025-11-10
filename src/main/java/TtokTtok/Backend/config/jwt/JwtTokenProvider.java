@@ -1,5 +1,8 @@
 package TtokTtok.Backend.config.jwt;
 
+import TtokTtok.Backend.domain.User;
+import TtokTtok.Backend.repository.UserRepository;
+import TtokTtok.Backend.web.dto.user.UserResponse;
 import TtokTtok.Backend.web.dto.user.UserResponse.TokenInfo;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -28,23 +31,38 @@ public class JwtTokenProvider {
     private final long accessTokenValidityInSeconds;
     private final long refreshTokenValidityInSeconds;
     private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     public JwtTokenProvider(@Value("VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa") String secretKey,
                             @Value("3600") long accessTokenValidity,
                             @Value("86400") long refreshTokenValidity,
-                            UserDetailsService userDetailsService)
+                            UserDetailsService userDetailsService,
+                            UserRepository userRepository)
     {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityInSeconds = accessTokenValidity * 1000;
         this.refreshTokenValidityInSeconds = refreshTokenValidity * 1000;
         this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
     }
     public TokenInfo generateToken(Authentication authentication) {
         //권한 가져오기
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+        UserResponse.UserDetailDto userDetailDto = UserResponse.UserDetailDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .dong(user.getDong())
+                .hosu(user.getHosu())
+                .role(user.getRole())
+                .build();
+
 
         long now = (new Date()).getTime();
         // Access Token 생성~
@@ -67,6 +85,7 @@ public class JwtTokenProvider {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .accessTokenExpiresIn(accessTokenExpiresIn.getTime())
+                .userDetailDto(userDetailDto)
                 .build();
     }
 
