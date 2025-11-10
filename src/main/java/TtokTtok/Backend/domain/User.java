@@ -41,6 +41,12 @@ public class User extends BaseEntity implements UserDetails {
     @Column(length = 10, nullable = false)
     private Integer hosu;
 
+    @Column(length = 255)
+    private String emailAuthCode;
+
+    @Column(nullable = false)
+    private boolean emailVerified;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoleType role;
@@ -71,6 +77,8 @@ public class User extends BaseEntity implements UserDetails {
     public void updatePassword(String password) {
         this.password = password;
     }
+
+    public void verifyEmail() {this.emailVerified = true;}
 
     // UserDetails 구현을 위한 메서드들
 

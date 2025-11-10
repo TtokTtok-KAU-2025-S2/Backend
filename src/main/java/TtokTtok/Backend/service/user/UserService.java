@@ -12,4 +12,6 @@ public interface UserService {
     void issueTemporaryPassword(UserRequest.EmailRequestDto emailRequestDtoDto);
 
     void resetPassword(UserRequest.PasswordResetRequestDto passwordResetRequestDto);
+
+    void verifyEmail(String email, String code);
 }

@@ -29,5 +29,6 @@ public class UserResponse {
         private String accessToken;
         private String refreshToken;
         private Long accessTokenExpiresIn;
+        private UserDetailDto userDetailDto;
     }
 }
