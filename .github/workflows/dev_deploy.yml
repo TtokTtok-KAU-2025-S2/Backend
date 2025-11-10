@@ -1,16 +1,22 @@
 name: Ttokttok Dev CI/CD
 
 on:
-  # 'develop' 브랜치에 Push(Merge 포함)가 발생했을 때 실행
+  pull_request:
+    branches: [develop]
+    types: [closed]
   push:
-    branches:
-      - develop
-  workflow_dispatch:
+    branches: [develop]
+  workflow_dispatch: # (2).수동 실행도 가능하도록
 
 jobs:
   build:
     runs-on: ubuntu-latest # (3).OS환경
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'develop'
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'develop')
 
     steps:
       - name: Checkout
