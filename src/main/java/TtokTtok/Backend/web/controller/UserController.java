@@ -27,6 +27,9 @@ public class UserController {
          return ApiResponse.onSuccess(UserResponse.UserDetailDto.builder()
                  .id(user.getId())
                  .email(user.getEmail())
+                 .dong(user.getDong())
+                 .hosu(user.getHosu())
+                 .role(user.getRole())
                  .build());
      }
 
