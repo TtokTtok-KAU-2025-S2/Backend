@@ -30,5 +30,6 @@ public class Notice extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(length = 511)
     private String imageUrl;
 }

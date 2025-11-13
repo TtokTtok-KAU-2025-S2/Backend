@@ -41,12 +41,21 @@ public class NoiseReportServiceImpl implements NoiseReportService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
-        Page<NoiseDiary> noiseDiaryPage;
-        noiseDiaryPage = noiseDiaryRepository.findAllByUser_ApartmentAndUser_DongAndReportYnOrderByReportedAtDesc(
-                user.getApartment(), user.getDong(), true, pageable);
+        Long totalEligibleVoters = userRepository.countByApartment(user.getApartment());
+
+        Page<NoiseReportResponse.NoiseReportPreviewDto> noiseReportPreviewDtoPage = noiseDiaryRepository.findNoiseReportPreviews(
+                user.getApartment(),
+                user.getDong(),
+                true,
+                VoteType.HEARD,
+                VoteType.NOT_HEARD,
+                VoteType.BE_CAREFUL,
+                pageable);
+
+        noiseReportPreviewDtoPage.getContent().forEach(dto -> dto.setTotalEligibleVoters(totalEligibleVoters));
 
 
-        return NoiseReportConverter.toNoiseReportListResponse(noiseDiaryPage);
+        return NoiseReportConverter.toNoiseReportListResponse(noiseReportPreviewDtoPage);
     }
 
     @Override
@@ -82,7 +91,7 @@ public class NoiseReportServiceImpl implements NoiseReportService {
                 })
                 .collect(Collectors.toList());
 
-        return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary,  voteCounts, commentDtos);
+        return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary, voteCounts, commentDtos, noiseDiary.getDbHigh(),noiseDiary.getDbAvg());
     }
 
 }

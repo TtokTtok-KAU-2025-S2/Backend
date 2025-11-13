@@ -6,6 +6,7 @@ import TtokTtok.Backend.web.dto.CommentResponse;
 import TtokTtok.Backend.web.dto.NoiseReportResponse;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,28 +23,31 @@ public class NoiseReportConverter {
                 .build();
     }
 
-    public static NoiseReportResponse.NoiseReportListResponse toNoiseReportListResponse(Page<NoiseDiary> noiseDiaryPage) {
-        List<NoiseReportResponse.NoiseReportPreviewDto> reportPreviewDtoList = noiseDiaryPage.stream()
-                .map(NoiseReportConverter::toNoiseReportPreviewDto).collect(Collectors.toList());
+    public static NoiseReportResponse.NoiseReportListResponse toNoiseReportListResponse(
+            Page<NoiseReportResponse.NoiseReportPreviewDto> noiseReportPreviewDtoPage) {
+                return NoiseReportResponse.NoiseReportListResponse.builder()
+                        .reports(noiseReportPreviewDtoPage.getContent())
+                        .listSize(noiseReportPreviewDtoPage.getContent().size())
+                        .totalPage(noiseReportPreviewDtoPage.getTotalPages())
+                        .totalElements(noiseReportPreviewDtoPage.getTotalElements())
+                        .isFirst(noiseReportPreviewDtoPage.isFirst())
+                        .isLast(noiseReportPreviewDtoPage.isLast())
+                        .build();
 
-        return NoiseReportResponse.NoiseReportListResponse.builder()
-                .reports(reportPreviewDtoList)
-                .listSize(reportPreviewDtoList.size())
-                .totalPage(noiseDiaryPage.getTotalPages())
-                .totalElements(noiseDiaryPage.getTotalElements())
-                .isFirst(noiseDiaryPage.isFirst())
-                .isLast(noiseDiaryPage.isLast())
-                .build();
     }
 
     public static NoiseReportResponse.NoiseReportDetailDto toNoiseReportDetailDto(
-            NoiseDiary noiseDiary, Map<VoteType, Long> voteCounts, List<CommentResponse.CommentDto> comments) {
+            NoiseDiary noiseDiary, Map<VoteType, Long> voteCounts, List<CommentResponse.CommentDto> comments,
+            BigDecimal maxDb, BigDecimal avgDb)
+    {
         return NoiseReportResponse.NoiseReportDetailDto.builder()
                 .reportId(noiseDiary.getId())
                 .authorDong(noiseDiary.getUser().getDong())
                 .reportedAt(noiseDiary.getReportedAt())
                 .category(noiseDiary.getCategory())
                 .summary(noiseDiary.getSummary())
+                .maxDb(maxDb)
+                .avgDb(avgDb)
                 .voteCounts(voteCounts)
                 .comments(comments)
                 .build();
