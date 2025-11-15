@@ -32,22 +32,21 @@ spring:
           auth: true
           starttls:
             enable: true
-#  cloud:
-#    aws:
-#      region:
-#        static: ap-northeast-2
-#      stack:
-#        auto: false
-#      credentials:
-#        access-key: ${AWS_ACCESS_KEY}
-#        secret-key: ${AWS_SECRET_KEY}
-#
-#  spring:
-#    cloud:
-#      aws:
-#        s3:
-#          bucket: #S3 버킷 생성하시고 그 이름 넣어주시면 될 것 같아요
-#
+
+cloud:
+  aws:
+    s3:
+      bucket: ttokttok-bucket
+      path:
+        notice: notices
+        voice-memo: voice-memos
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
 
   # --- JWT 설정 ---
   jwt:

@@ -3,13 +3,18 @@ package TtokTtok.Backend.web.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 public class NoticeRequest {
 
     @Getter
+    @Setter
     @NoArgsConstructor
     public static class CreateNoticeDto {
         private String title;
         private String content;
+
+        MultipartFile noticePicture;
     }
 }

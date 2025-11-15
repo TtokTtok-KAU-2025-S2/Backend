@@ -46,7 +46,10 @@ public enum ErrorStatus implements BaseErrorCode {
     // Member 없음 오류
 //    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4001", "사용자가 없습니다");
 
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다.");
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다."),
+
+    // 파일이 비어있을 때
+    FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "FILE4001", "업로드할 파일이 비어있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
