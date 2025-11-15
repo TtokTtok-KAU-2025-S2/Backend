@@ -5,6 +5,6 @@ import TtokTtok.Backend.web.dto.NoticeRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface NoticeService {
-    Notice createNotice(NoticeRequest.CreateNoticeDto request, MultipartFile image);
+    Notice createNotice(NoticeRequest.CreateNoticeDto request);
     Notice getNotice(Long noticeId);
 }
