@@ -67,10 +67,6 @@ public class NoiseDiary extends BaseEntity {
     @Column(nullable = true)
     private LocalDateTime updateAt;
 
-    // soft delete 플래그 추가
-    //@Column(nullable = false)
-    //@Builder.Default
-    //private Boolean deleted = false;
 
     // --- 양방향 연관관계 (CascadeType.ALL: 일기 삭제 시 관련 투표/댓글 모두 삭제) ---
 
