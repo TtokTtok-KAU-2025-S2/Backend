@@ -11,6 +11,5 @@ public class NoticeRequest {
     public static class CreateNoticeDto {
         private String title;
         private String content;
-        private String imageUrl;
     }
 }

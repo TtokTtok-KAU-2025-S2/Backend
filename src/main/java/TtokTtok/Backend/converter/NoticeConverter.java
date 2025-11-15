@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 
 public class NoticeConverter {
 
-    public static Notice toNotice(NoticeRequest.CreateNoticeDto request, User user) {
+    public static Notice toNotice(NoticeRequest.CreateNoticeDto request, User user, String imageUrl) {
         return Notice.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(imageUrl)
                 .user(user)
                 .apartment(user.getApartment()) // 사용자가 속한 아파트 설정
                 .build();

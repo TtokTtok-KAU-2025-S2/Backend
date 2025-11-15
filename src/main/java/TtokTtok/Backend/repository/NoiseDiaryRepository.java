@@ -10,6 +10,8 @@ import TtokTtok.Backend.web.dto.ReportDto;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import TtokTtok.Backend.common.enums.VoteType;
+import TtokTtok.Backend.web.dto.NoiseReportResponse;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -70,6 +72,28 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             @Param("userId") Long userId,
             @Param("targetDate") LocalDate targetDate
     );
+
+    @Query("SELECT new TtokTtok.Backend.web.dto.NoiseReportResponse$NoiseReportPreviewDto(" +
+            "n.id, " +
+            "n.user.dong, " +
+            "n.reportedAt, " +
+            "n.category, " +
+            "n.summary, " +
+            "(SELECT COUNT(c.id) FROM ReportComment c WHERE c.noiseDiary = n), " +
+            "(SELECT COUNT(v.id) FROM Vote v WHERE v.noiseDiary = n AND v.type = :heard), " +
+            "(SELECT COUNT(v.id) FROM Vote v WHERE v.noiseDiary = n AND v.type = :notHeard), " +
+            "(SELECT COUNT(v.id) FROM Vote v WHERE v.noiseDiary = n AND v.type = :beCareful)) " +
+            "FROM NoiseDiary n " +
+            "WHERE n.user.apartment = :apartment AND n.user.dong = :dong AND n.reportYn = :reportYn")
+    Page<NoiseReportResponse.NoiseReportPreviewDto> findNoiseReportPreviews(
+            @Param("apartment") Apartment apartment,
+            @Param("dong") Integer dong,
+            @Param("reportYn") Boolean reportYn,
+            @Param("heard") VoteType heard,
+            @Param("notHeard") VoteType notHeard,
+            @Param("beCareful") VoteType beCareful,
+            Pageable pageable);
+
 
     // ⭐⭐ 오류 발생 메서드 수정 (User_Apartment로 경로 지정) ⭐⭐
 
