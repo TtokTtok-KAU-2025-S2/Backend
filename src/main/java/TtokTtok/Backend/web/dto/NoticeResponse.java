@@ -1,6 +1,5 @@
 package TtokTtok.Backend.web.dto;
 //서버에서 클라이언트로 공지사항 정보를 보낼 때 사용
-import TtokTtok.Backend.domain.Notice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,8 +1,6 @@
 package TtokTtok.Backend.domain;
 
 import TtokTtok.Backend.common.BaseEntity;
-import TtokTtok.Backend.domain.Apartment;
-import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.web.dto.PreNoticeRequest;
 import jakarta.persistence.*;
 import lombok.*;

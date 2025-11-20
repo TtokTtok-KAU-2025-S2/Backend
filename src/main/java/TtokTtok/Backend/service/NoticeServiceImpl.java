@@ -17,9 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
-import TtokTtok.Backend.apiPayload.exception.GeneralException;
-import java.io.IOException;
 import java.util.UUID;
 
 @Service

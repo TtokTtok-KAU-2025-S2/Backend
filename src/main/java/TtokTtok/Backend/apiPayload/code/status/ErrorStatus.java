@@ -49,7 +49,13 @@ public enum ErrorStatus implements BaseErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "해당 월의 리포트 데이터가 없습니다."),
 
     // 파일이 비어있을 때
-    FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "FILE4001", "업로드할 파일이 비어있습니다.");
+    FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "FILE4001", "업로드할 파일이 비어있습니다."),
+
+    VOICE_RECORDING_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORDING4001", "음성 녹음 정보를 찾을 수 없습니다."),
+    VOICE_RECORDING_FORBIDDEN(HttpStatus.FORBIDDEN, "RECORDING4002", "해당 음성 녹음에 접근할 수 없습니다."),
+    AUDIO_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RECORDING5001", "녹음 파일을 불러오지 못했습니다."),
+    OPENAI_TRANSCRIPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI5001", "OpenAI 음성 인식 호출에 실패했습니다."),
+    OPENAI_COMPLETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI5002", "OpenAI 응답 생성에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

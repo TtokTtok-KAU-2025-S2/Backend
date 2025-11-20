@@ -1,4 +1,4 @@
-package TtokTtok.Backend.domain.noise.dto;
+package TtokTtok.Backend.web.dto.noise;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

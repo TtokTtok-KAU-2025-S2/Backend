@@ -1,7 +1,6 @@
 package TtokTtok.Backend.service.auth;
 
 import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
-import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

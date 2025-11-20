@@ -48,6 +48,16 @@ cloud:
       accessKey: ${AWS_ACCESS_KEY_ID}
       secretKey: ${AWS_SECRET_ACCESS_KEY}
 
+
+# --- OpenAI 설정 ---
+openai:
+  api-key: ${OPENAI_API_KEY}          # ✅ 환경 변수에 OPENAI_API_KEY 등록
+  base-url: https://api.openai.com/v1
+  transcription-model: whisper-1       # Whisper 모델 (음성 인식용)
+  chat-model: gpt-4o-mini              # 요약/분류용 텍스트 모델
+
+
+
   # --- JWT 설정 ---
   jwt:
     secret: ${JWT_KEY}

@@ -22,6 +22,7 @@ public class NoiseRecordDTO {
     private BigDecimal dbHigh;              // 최대 데시벨
     private BigDecimal dbAvg;              // 평균 데시벨
     private String summary;             // AI가 생성한 소음 메모
+    private String description;        //사용자가 작성한 소음 메모
     private LocalDateTime updatedAt;
 
 }

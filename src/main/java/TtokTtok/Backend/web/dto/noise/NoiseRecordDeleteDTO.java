@@ -1,4 +1,4 @@
-package TtokTtok.Backend.domain.noise.dto;
+package TtokTtok.Backend.web.dto.noise;
 
 //HardDELETE 시 필요함
 
