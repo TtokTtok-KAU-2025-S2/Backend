@@ -20,12 +20,18 @@ public class NoticeResponse {
         private LocalDateTime createdAt;
     }
 
+    // 사전양해(PreNotice)처럼 페이징 정보를 포함하도록 수정
     @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class NoticeListResponse {
         private List<NoticePreviewDto> notices;
+        private Integer listSize;
+        private Integer totalPage;
+        private Long totalElements;
+        private Boolean isFirst;
+        private Boolean isLast;
     }
 
     @Builder

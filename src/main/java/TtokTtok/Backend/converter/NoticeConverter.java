@@ -4,6 +4,7 @@ import TtokTtok.Backend.domain.Notice;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.web.dto.NoticeRequest;
 import TtokTtok.Backend.web.dto.NoticeResponse;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +39,19 @@ public class NoticeConverter {
                 .build();
     }
 
-    public static NoticeResponse.NoticeListResponse toNoticeListResponse(List<Notice> notices) {
-        List<NoticeResponse.NoticePreviewDto> noticePreviews = notices.stream()
+    // Page<Notice>를 받아서 페이징 정보가 포함된 응답으로 변환
+    public static NoticeResponse.NoticeListResponse toNoticeListResponse(Page<Notice> noticePage) {
+        List<NoticeResponse.NoticePreviewDto> noticePreviews = noticePage.stream()
                 .map(NoticeConverter::toNoticePreviewDto)
                 .collect(Collectors.toList());
+
         return NoticeResponse.NoticeListResponse.builder()
                 .notices(noticePreviews)
+                .listSize(noticePreviews.size())
+                .totalPage(noticePage.getTotalPages())
+                .totalElements(noticePage.getTotalElements())
+                .isFirst(noticePage.isFirst())
+                .isLast(noticePage.isLast())
                 .build();
     }
 }

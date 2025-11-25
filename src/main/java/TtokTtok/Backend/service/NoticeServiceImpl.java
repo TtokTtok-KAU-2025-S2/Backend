@@ -14,6 +14,8 @@ import TtokTtok.Backend.repository.UserRepository;
 import TtokTtok.Backend.repository.UuidRepository;
 import TtokTtok.Backend.web.dto.NoticeRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,9 +61,19 @@ public class NoticeServiceImpl implements NoticeService {
          return noticeRepository.save(newNotice);
      }
 
-     @Override
-     public Notice getNotice(Long noticeId) {
-         return noticeRepository.findById(noticeId)
-                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOTICE_NOT_FOUND));
-     }
+    @Override
+    public Notice getNotice(Long noticeId) {
+        return noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOTICE_NOT_FOUND));
+    }
+
+    @Override
+    public Page<Notice> getNoticeList(Pageable pageable) {
+        // 현재 로그인한 유저의 아파트 정보로 필터링
+        String userEmail = SecurityUtil.getCurrentUserEmail();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        return noticeRepository.findAllByApartment(user.getApartment(), pageable);
+    }
 }
