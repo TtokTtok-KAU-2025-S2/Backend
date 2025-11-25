@@ -38,7 +38,6 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
 
         ApiResponse<Object> apiResponse = ApiResponse.onFailure(ErrorStatus.TOKEN_INVALID.getCode(),ex.getMessage(),null);
 
-        ObjectMapper mapper = new ObjectMapper();
         String jsonResponse = objectMapper.writeValueAsString(apiResponse);
         response.getWriter().write(jsonResponse);
     }

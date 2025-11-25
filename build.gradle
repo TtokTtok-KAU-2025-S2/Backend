@@ -44,11 +44,16 @@ dependencies {
 	// Swagger는 springdoc 하나만 사용 (Spring Boot 3 호환)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.3'
 
+    implementation 'com.fasterxml.jackson.core:jackson-databind' //
+
 	implementation 'com.google.genai:google-genai:1.0.0'
+
+    implementation 'org.reactivestreams:reactive-streams:1.0.4'
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -58,6 +63,8 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+
 }
 
 tasks.named('test') {

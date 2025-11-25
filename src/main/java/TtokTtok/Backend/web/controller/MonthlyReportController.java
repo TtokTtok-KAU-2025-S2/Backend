@@ -16,15 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
-// 1. Spring Security의 @AuthenticationPrincipal 임포트
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-// 2. User 엔티티 임포트 (UserDetails를 구현한 클래스)
 import TtokTtok.Backend.domain.User;
-// ------------------- (수정) -------------------
-// 3. 널 체크를 위한 예외 클래스 임포트
-import TtokTtok.Backend.apiPayload.exception.GeneralException;
-import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
-// ---------------------------------------------
 
 
 @RestController

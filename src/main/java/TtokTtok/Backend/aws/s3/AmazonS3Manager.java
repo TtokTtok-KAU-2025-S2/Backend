@@ -2,7 +2,6 @@ package TtokTtok.Backend.aws.s3;
 
 import TtokTtok.Backend.config.AmazonConfig;
 import TtokTtok.Backend.domain.Uuid;
-import TtokTtok.Backend.repository.UuidRepository;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -22,13 +21,8 @@ public class AmazonS3Manager{
 
     private final AmazonConfig amazonConfig;
 
-    private final UuidRepository uuidRepository;
-
 
     public String uploadFile(String keyName, MultipartFile file) {
-        String originalFilename = file.getOriginalFilename(); //원본 파일 명
-        String extention = originalFilename.substring(originalFilename.lastIndexOf("."));
-
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(file.getSize());
         metadata.setContentType(file.getContentType());

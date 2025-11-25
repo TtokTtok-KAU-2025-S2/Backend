@@ -10,21 +10,16 @@ import TtokTtok.Backend.web.dto.NoiseDiaryResponseDTO;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordUpdateDTO;
 import TtokTtok.Backend.repository.NoiseDiaryRepository;
 import TtokTtok.Backend.repository.UserRepository;
-import TtokTtok.Backend.service.GeminiService;
-import TtokTtok.Backend.web.dto.noise.NoiseRecordCreateDTO;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordDTO;
-import TtokTtok.Backend.config.jwt.SecurityUtil; // ⭐ SecurityUtil import 추가
+import TtokTtok.Backend.config.jwt.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
-import static TtokTtok.Backend.common.enums.NoiseCategory.*;
 
 @RequiredArgsConstructor
 @Service
@@ -33,7 +28,6 @@ public class NoiseRecordService {
 
     private final NoiseDiaryRepository noiseDiaryRepository;
     private final UserRepository userRepository;
-    private final GeminiService geminiService;
     private final VoteRepository voteRepository;
 
     // 총 소음 기록 수 조회
@@ -202,6 +196,7 @@ public class NoiseRecordService {
                 diary.getDbHigh(),
                 diary.getDbAvg(),
                 diary.getSummary(),
+                diary.getDescription(),
                 diary.getUpdateAt()
         );
     }
@@ -210,9 +205,6 @@ public class NoiseRecordService {
     @Transactional
     public void deleteNoiseRecord(Long recordId) {
         Long userId = SecurityUtil.getCurrentUserId(); // 이미 토큰에서 추출됨
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("MEMBER4001"));
 
         NoiseDiary diary = noiseDiaryRepository.findById(recordId)
                 .orElseThrow(() -> new IllegalArgumentException("NOISE4006"));

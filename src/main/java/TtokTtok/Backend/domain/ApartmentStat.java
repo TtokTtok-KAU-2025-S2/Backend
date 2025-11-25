@@ -2,12 +2,9 @@ package TtokTtok.Backend.domain;
 
 import TtokTtok.Backend.common.BaseEntity;
 import TtokTtok.Backend.common.enums.ActivationStatus;
-import TtokTtok.Backend.common.enums.NoiseGrade;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
 @Entity

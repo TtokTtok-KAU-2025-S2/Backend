@@ -3,13 +3,11 @@ package TtokTtok.Backend.repository;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.Vote;
-import TtokTtok.Backend.common.enums.VoteType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
-import java.util.Map;
 import java.util.List;
 
 public interface VoteRepository  extends JpaRepository<Vote, Long> {

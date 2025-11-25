@@ -8,20 +8,15 @@ import TtokTtok.Backend.web.dto.NoticeRequest;
 import TtokTtok.Backend.web.dto.NoticeResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // PreAuthorize 임포트
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/notice")
 @RequiredArgsConstructor
 public class NoticeController {
      private final NoticeService noticeService;
-    private final ObjectMapper objectMapper;
 
      @PostMapping(consumes = "multipart/form-data")
      @PreAuthorize("hasRole('ADMIN')") // ADMIN 역할만 접근 허용

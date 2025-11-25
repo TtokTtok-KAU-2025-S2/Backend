@@ -5,7 +5,6 @@ import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.web.dto.NoticeRequest;
 import TtokTtok.Backend.web.dto.NoticeResponse;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 

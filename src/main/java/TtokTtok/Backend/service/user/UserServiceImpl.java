@@ -9,7 +9,6 @@ import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.repository.ApartmentRepository;
 import TtokTtok.Backend.repository.UserRepository;
 import TtokTtok.Backend.service.mail.EmailService;
-import TtokTtok.Backend.service.user.UserService;
 import TtokTtok.Backend.web.dto.user.UserRequest;
 import TtokTtok.Backend.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;

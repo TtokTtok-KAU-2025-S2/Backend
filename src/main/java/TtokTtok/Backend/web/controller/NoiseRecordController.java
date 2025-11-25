@@ -1,12 +1,9 @@
 package TtokTtok.Backend.web.controller;
 
-import TtokTtok.Backend.config.jwt.SecurityUtil;
 import TtokTtok.Backend.web.dto.NoiseDiaryRequestDTO;
 import TtokTtok.Backend.web.dto.NoiseDiaryResponseDTO;
-import TtokTtok.Backend.web.dto.noise.NoiseRecordCreateDTO;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordUpdateDTO;
 import TtokTtok.Backend.service.NoiseRecordService;
-import TtokTtok.Backend.web.dto.noise.NoiseRecordDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,10 +22,8 @@ public class NoiseRecordController {
     //총 소음기록 수 조회
     // ⭐ URL에서 /{userId} 제거
     @GetMapping("/total-count")
-    public ResponseEntity<?> getTotalCount() { // ⭐ @PathVariable Long userId 제거
+    public ResponseEntity<?> getTotalCount() {
         try {
-            // ⭐ JWT 토큰에서 userId 추출
-            Long userId = SecurityUtil.getCurrentUserId();
             long total = noiseRecordService.getTotalCount();
 
             Map<String, Object> result = new HashMap<>();
@@ -53,12 +48,9 @@ public class NoiseRecordController {
     // ⭐ URL에서 /{userId} 제거
     @GetMapping("/monthly-count")
     public ResponseEntity<?> getMonthlyCount(
-            // ⭐ @PathVariable Long userId 제거
             @RequestParam int year,
             @RequestParam int month) {
         try {
-            // ⭐ JWT 토큰에서 userId 추출
-            Long userId = SecurityUtil.getCurrentUserId();
             long monthlyCount = noiseRecordService.getMonthlyCount(year, month);
 
             Map<String, Object> result = new HashMap<>();
@@ -86,10 +78,8 @@ public class NoiseRecordController {
 
     // ⭐ URL에서 /{userId} 제거
     @GetMapping("/average-db")
-    public ResponseEntity<?> getAverageDb() { // ⭐ @PathVariable Long userId 제거
+    public ResponseEntity<?> getAverageDb() {
         try {
-            // ⭐ JWT 토큰에서 userId 추출
-            Long userId = SecurityUtil.getCurrentUserId();
             Double avg = noiseRecordService.getAverageDb();
 
             Map<String, Object> result = new HashMap<>();
@@ -160,9 +150,6 @@ public class NoiseRecordController {
     @PatchMapping("/{recordId}")
     public ResponseEntity<?> UpdateRecord(@PathVariable Long recordId, @RequestBody NoiseRecordUpdateDTO request) {
         try {
-            // ⭐ JWT 토큰에서 userId 꺼내기 (하드코딩 제거)
-            Long userId = SecurityUtil.getCurrentUserId();
-
             var updated = noiseRecordService.updateNoiseRecord(recordId, request);
 
             Map<String, Object> response = new HashMap<>();
@@ -200,10 +187,6 @@ public class NoiseRecordController {
     @DeleteMapping("/{recordId}")
     public ResponseEntity<?> DeleteRecord(@PathVariable Long recordId) {
         try {
-            // ⭐ JWT 토큰에서 userId 꺼내기 (하드코딩 제거)
-            Long userId = SecurityUtil.getCurrentUserId();
-
-            // Hard delete 로직 호출 (Service에 deleteNoiseRecord(userId, recordId) 메서드가 있다고 가정)
             noiseRecordService.deleteNoiseRecord(recordId);
 
             Map<String, Object> result = new HashMap<>();
