@@ -177,6 +177,10 @@ public class AnalysisService {
                 .category(decision.category())
                 .transcript(transcript)
                 .reason(decision.reason())
+                .createdAt(recording.getCreatedAt()) // 생성 시간
+                .duration(recording.getDuration())   // 녹음/소음 지속 시간
+                .dbMax(recording.getDbMax())         // 최대 데시벨
+                .dbAvg(recording.getDbAvg())         // 평균 데시벨
                 .build();
     }
 

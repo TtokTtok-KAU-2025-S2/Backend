@@ -16,19 +16,17 @@ public class RecordingController {
 
     private final RecordingService recordingService;
 
-    /**
-     * 음성 녹음 파일 업로드 API
-     * (인증된 사용자만 접근 가능)
-     * @param voiceFile (필수) 음성 파일 (e.g., m4a, mp3, webm...)
-     * @return 저장된 S3 URL과 DB ID가 포함된 DTO
-     */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()") // 인증된 사용자만 이 API를 호출할 수 있도록 설정
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RecordingResponse.UploadDto> uploadVoiceRecording(
-            @RequestParam("voiceFile") MultipartFile voiceFile
+            @RequestParam("voiceFile") MultipartFile voiceFile,
+            // ✨ [추가] 메타데이터 파라미터 (선택적)
+            @RequestParam(value = "duration", required = false) Integer duration,
+            @RequestParam(value = "dbMax", required = false) Double dbMax,
+            @RequestParam(value = "dbAvg", required = false) Double dbAvg
     ) {
-        // 서비스 로직 호출 (userId 필요 없음)
-        RecordingResponse.UploadDto response = recordingService.uploadRecording(voiceFile);
+        RecordingResponse.UploadDto response = recordingService.uploadRecording(voiceFile, duration, dbMax, dbAvg);
         return ResponseEntity.ok(response);
     }
+
 }

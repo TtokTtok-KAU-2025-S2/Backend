@@ -3,8 +3,9 @@ package TtokTtok.Backend.external.openai;
 import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
 import TtokTtok.Backend.apiPayload.exception.GeneralException;
 import TtokTtok.Backend.config.OpenAiProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -27,9 +28,11 @@ public class OpenAiClient {
 
     private final RestClient restClient;
     private final OpenAiProperties properties;
+    private final ObjectMapper objectMapper; // ✨ 파싱을 위해 추가
 
-    public OpenAiClient(RestClient.Builder builder, OpenAiProperties properties) {
+    public OpenAiClient(RestClient.Builder builder, OpenAiProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
+        this.objectMapper = objectMapper; // ✨ 주입
         this.restClient = builder
                 .baseUrl(properties.getBaseUrl())
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getApiKey())
@@ -38,7 +41,6 @@ public class OpenAiClient {
 
     /**
      * Whisper (audio transcription) 호출
-     * Whisper 모델을 사용하여 음성 파일을 텍스트로 변환합니다.
      */
     public String transcribe(byte[] audioBytes, String filename, MediaType mediaType) {
         ByteArrayResource resource = new ByteArrayResource(audioBytes) {
@@ -51,24 +53,25 @@ public class OpenAiClient {
         MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
         bodyBuilder.part("file", resource)
                 .contentType(mediaType != null ? mediaType : MediaType.APPLICATION_OCTET_STREAM);
-        bodyBuilder.part("model", properties.getTranscriptionModel()); // whisper-1
-        bodyBuilder.part("response_format", "json");
+        bodyBuilder.part("model", properties.getTranscriptionModel());
+        bodyBuilder.part("response_format", "text"); // Text로 받음
         bodyBuilder.part("temperature", "0");
-        bodyBuilder.part("language", "ko"); // 한국어 지정 (선택사항이지만 정확도 향상)
+        bodyBuilder.part("language", "ko");
 
         try {
-            OpenAiTranscriptionResponse response = restClient.post()
+            String responseText = restClient.post()
                     .uri("/audio/transcriptions")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(bodyBuilder.build())
                     .retrieve()
-                    .body(OpenAiTranscriptionResponse.class);
+                    .body(String.class);
 
-            if (response == null || !StringUtils.hasText(response.getText())) {
+            if (!StringUtils.hasText(responseText)) {
                 log.error("OpenAI transcription returned empty response");
                 throw new GeneralException(ErrorStatus.OPENAI_TRANSCRIPTION_FAILED);
             }
-            return response.getText();
+            return responseText;
+
         } catch (RestClientException e) {
             log.error("OpenAI transcription API error: {}", e.getMessage());
             throw new GeneralException(ErrorStatus.OPENAI_TRANSCRIPTION_FAILED);
@@ -79,7 +82,8 @@ public class OpenAiClient {
     }
 
     /**
-     * ChatCompletion 호출 (system/user 메시지 기반)
+     * ChatCompletion 호출
+     * ✨ 수정: String으로 받아서 수동 파싱 (자동 매핑 에러 방지)
      */
     public String createChatCompletion(OpenAiChatRequest request) {
         Map<String, Object> payload = new HashMap<>();
@@ -99,56 +103,37 @@ public class OpenAiClient {
         }
 
         try {
-            OpenAiChatCompletionResponse response = restClient.post()
+            // 1. String으로 응답 받기
+            String responseBody = restClient.post()
                     .uri("/chat/completions")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(payload)
                     .retrieve()
-                    .body(OpenAiChatCompletionResponse.class);
+                    .body(String.class);
 
-            if (response == null || CollectionUtils.isEmpty(response.getChoices())) {
+            // 2. JSON 파싱 (ObjectMapper 사용)
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            JsonNode choicesNode = rootNode.path("choices");
+
+            if (choicesNode.isMissingNode() || choicesNode.isEmpty()) {
                 log.error("OpenAI completion returned empty choices");
                 throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
             }
 
-            String content = Optional.ofNullable(response.getChoices().get(0).getMessage())
-                    .map(OpenAiChatCompletionResponse.Message::getContent)
-                    .orElse(null);
+            // 3. content 추출
+            String content = choicesNode.get(0).path("message").path("content").asText();
 
             if (!StringUtils.hasText(content)) {
                 throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
             }
             return content;
+
         } catch (RestClientException e) {
             log.error("OpenAI completion API error: {}", e.getMessage());
             throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
         } catch (Exception e) {
             log.error("Unexpected completion error", e);
             throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
-        }
-    }
-
-    private static class OpenAiTranscriptionResponse {
-        private String text;
-
-        public String getText() {
-            return text;
-        }
-    }
-
-    @Getter
-    private static class OpenAiChatCompletionResponse {
-        private List<Choice> choices;
-
-        @Getter
-        private static class Choice {
-            private Message message;
-        }
-
-        @Getter
-        private static class Message {
-            private String role;
-            private String content;
         }
     }
 
@@ -162,4 +147,3 @@ public class OpenAiClient {
     ) {
     }
 }
-

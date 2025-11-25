@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 public class NoiseAiResponse {
 
@@ -17,6 +19,12 @@ public class NoiseAiResponse {
         private NoiseCategory category;
         private String transcript;
         private String reason;
+
+        // ✨ [추가] 요청하신 상세 정보 필드
+        private LocalDateTime createdAt; // 측정 시간 (날짜)
+        private Integer duration;        // 측정 시간 (초)
+        private Double dbMax;            // 최대 소음
+        private Double dbAvg;            // 평균 소음
     }
 
     @Getter
@@ -29,5 +37,3 @@ public class NoiseAiResponse {
         private String summary;
     }
 }
-
-

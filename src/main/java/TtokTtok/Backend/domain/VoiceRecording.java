@@ -25,4 +25,9 @@ public class VoiceRecording extends BaseEntity {
     private String originalFileName;
 
     // 필요시 duration (녹음 시간) 등 필드 추가
+
+    // ✨ [추가] 메타데이터 필드
+    private Integer duration; // 지속 시간 (초)
+    private Double dbMax;     // 최대 데시벨
+    private Double dbAvg;     // 평균 데시벨
 }
