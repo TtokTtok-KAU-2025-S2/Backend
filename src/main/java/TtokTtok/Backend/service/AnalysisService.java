@@ -3,6 +3,7 @@ package TtokTtok.Backend.service;
 import TtokTtok.Backend.apiPayload.code.status.ErrorStatus;
 import TtokTtok.Backend.apiPayload.exception.GeneralException;
 import TtokTtok.Backend.common.enums.NoiseCategory;
+import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.VoiceRecording;
 import TtokTtok.Backend.external.openai.OpenAiClient;
@@ -35,7 +36,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * AI 분석 파이프라인: S3 -> OpenAI Whisper -> GPT
+ * AI 분석 파이프라인
+ * - 카테고리 분류: OpenAI (JSON 포맷)
+ * - 요약 생성: Google Gemini (텍스트 생성)
  */
 @Slf4j
 @Service
@@ -43,23 +46,112 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class AnalysisService {
 
-    private static final DateTimeFormatter DISPLAY_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter DISPLAY_DATE_TIME = DateTimeFormatter.ofPattern("MM월 dd일 HH:mm");
+
     private static final String CATEGORY_SYSTEM_PROMPT = """
             당신은 층간소음 패턴을 분류하는 전문가입니다. 제공된 녹음 내용과 측정 데이터를 기반으로 가장 적합한 카테고리를 선택하세요.
             가능한 카테고리: FOOTSTEPS, HAMMERING, FURNITURE, MUSIC, UNKNOWN.
             """;
+
+    // ✨ [Gemini용] 객관적인 팩트 요약 프롬프트
     private static final String SUMMARY_SYSTEM_PROMPT = """
-            당신은 층간소음을 겪은 사용자의 일기를 대신 작성해주는 한국어 어시스턴트입니다.
-            - 3~4문장 내외로 공감, 상황 설명, 느낀점, 요청을 자연스럽게 포함합니다.
-            - 과장하거나 사실과 다른 내용을 추가하지 않습니다.
-            - 존댓말을 사용하고, 구체적인 시간/데시벨 정보를 활용합니다.
+            당신은 층간소음 상황을 팩트 위주로 간결하게 요약하는 리포터입니다.
+            주어진 데이터를 바탕으로 '언제, 얼마 동안, 어떤 소음이 발생했는지'를 한 문장으로 요약하세요.
+            
+            [작성 규칙]
+            1. 불필요한 서술이나 감정적 표현(공감, 위로 등)은 절대 금지합니다.
+            2. 날짜, 시간, 지속시간, 소음 종류를 반드시 포함하세요.
+            3. 어미는 '~발생', '~함' 등으로 간결하게 끝맺으세요.
+            
+            [출력 예시]
+            - 10월 28일 23:00경, 10분간 지속적인 쿵쿵거리는 발소리 소음 발생
+            - 11월 05일 14:20경, 5분간 간헐적인 망치질 소음 발생
             """;
 
     private final RecordingRepository recordingRepository;
     private final AmazonS3 amazonS3;
     private final AmazonConfig amazonConfig;
-    private final OpenAiClient openAiClient;
+    private final OpenAiClient openAiClient; // 카테고리 분석용 (JSON 응답 필요 시 사용)
+    private final GeminiService geminiService; // ✨ 요약 생성용 (Google Gemini)
     private final ObjectMapper objectMapper;
+
+    // ----------------------------------------------------------------
+    // ✨ [수정] Gemini를 사용한 내부 호출용 AI 요약 생성 메서드
+    // ----------------------------------------------------------------
+    public String generateSummaryForReport(NoiseDiary diary) {
+        // 1. 사용자 데이터 프롬프트 구성
+        String userPrompt = buildSummaryUserPromptFromEntity(diary);
+
+        // 2. 시스템 프롬프트와 결합 (GeminiService.fromTextInput은 단일 텍스트를 받으므로)
+        String finalPrompt = SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt;
+
+        // 3. Gemini 호출
+        try {
+            log.info("Gemini AI 요약 요청 시작 (Diary ID: {})", diary.getId());
+            String completion = geminiService.fromTextInput(finalPrompt);
+            log.info("Gemini AI 요약 완료: {}", completion);
+            return sanitizeAssistantText(completion);
+        } catch (Exception e) {
+            log.error("Gemini AI 요약 생성 실패 (Diary ID: {}): {}", diary.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    // [프롬프트 빌더] NoiseDiary 엔티티 -> 텍스트
+    private String buildSummaryUserPromptFromEntity(NoiseDiary diary) {
+        LocalDateTime occuredAt = diary.getOccuredAt() != null ? diary.getOccuredAt() : LocalDateTime.now();
+
+        // 카테고리 한글 변환
+        String categoryKr = switch (diary.getCategory()) {
+            case FOOTSTEPS -> "발소리(쿵쿵거림)";
+            case HAMMERING -> "망치질/두드리는 소리";
+            case FURNITURE -> "가구 끄는 소리";
+            case MUSIC -> "악기/음악 소리";
+            case UNKNOWN -> "알 수 없는 소음";
+        };
+
+        return """
+                [요청 데이터]
+                - 발생 시각: %s
+                - 지속 시간: %d초
+                - 소음 종류: %s
+                - 평균 데시벨: %s dB
+                - 사용자 메모: %s
+                
+                위 데이터를 바탕으로 한 줄 요약을 작성해 주세요.
+                """.formatted(
+                occuredAt.format(DISPLAY_DATE_TIME),
+                diary.getDuration(),
+                categoryKr,
+                diary.getDbAvg(),
+                (diary.getDescription() != null ? diary.getDescription() : "없음")
+        );
+    }
+
+    // ----------------------------------------------------------------
+    // [수정] 컨트롤러용 요약 메서드도 Gemini로 변경
+    // ----------------------------------------------------------------
+    public NoiseAiResponse.SummaryDto generateSummary(NoiseAiRequest.SummaryRequest request) {
+        VoiceRecording recording = getOwnedRecording(request.getRecordId());
+        String transcript = resolveTranscript(request.getTranscript(), recording);
+
+        String userPrompt = buildSummaryUserPrompt(request, transcript);
+        String finalPrompt = SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt;
+
+        // ✨ Gemini 호출로 변경
+        String completion = geminiService.fromTextInput(finalPrompt);
+        String summary = sanitizeAssistantText(completion);
+
+        return NoiseAiResponse.SummaryDto.builder()
+                .category(request.getCategory())
+                .transcript(transcript)
+                .summary(summary)
+                .build();
+    }
+
+    // ----------------------------------------------------------------
+    // 기존 메서드들 (카테고리 분석 등) - OpenAI 유지
+    // ----------------------------------------------------------------
 
     public NoiseAiResponse.CategoryAnalysisDto analyzeCategory(NoiseAiRequest.CategoryRequest request) {
         VoiceRecording recording = getOwnedRecording(request.getRecordId());
@@ -68,6 +160,7 @@ public class AnalysisService {
         String userPrompt = buildCategoryUserPrompt(request, transcript);
         Map<String, Object> responseFormat = buildCategoryResponseFormat();
 
+        // 카테고리 분석은 JSON 포맷팅이 필요하므로 OpenAI 유지
         String completion = openAiClient.createChatCompletion(
                 OpenAiChatRequest.builder()
                         .systemPrompt(CATEGORY_SYSTEM_PROMPT)
@@ -87,28 +180,7 @@ public class AnalysisService {
                 .build();
     }
 
-    public NoiseAiResponse.SummaryDto generateSummary(NoiseAiRequest.SummaryRequest request) {
-        VoiceRecording recording = getOwnedRecording(request.getRecordId());
-        String transcript = resolveTranscript(request.getTranscript(), recording);
-
-        String userPrompt = buildSummaryUserPrompt(request, transcript);
-        String completion = openAiClient.createChatCompletion(
-                OpenAiChatRequest.builder()
-                        .systemPrompt(SUMMARY_SYSTEM_PROMPT)
-                        .userPrompt(userPrompt)
-                        .temperature(0.35)
-                        .maxTokens(320)
-                        .build()
-        );
-
-        String summary = sanitizeAssistantText(completion);
-
-        return NoiseAiResponse.SummaryDto.builder()
-                .category(request.getCategory())
-                .transcript(transcript)
-                .summary(summary)
-                .build();
-    }
+    // ... (이하 private helper 메서드들은 변경 없음) ...
 
     private VoiceRecording getOwnedRecording(Long recordId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
@@ -136,10 +208,6 @@ public class AnalysisService {
         return openAiClient.transcribe(audioBytes, filename, mediaType);
     }
 
-    /**
-     * S3에서 녹음 파일을 다운로드합니다.
-     * fileUrl에서 S3 key를 추출하여 파일을 다운로드합니다.
-     */
     private byte[] downloadRecording(String fileUrl) {
         if (!StringUtils.hasText(fileUrl)) {
             log.error("fileUrl is empty, cannot download recording");
@@ -151,30 +219,22 @@ public class AnalysisService {
 
         try (S3Object s3Object = amazonS3.getObject(amazonConfig.getBucket(), key);
              S3ObjectInputStream inputStream = s3Object.getObjectContent()) {
-            
+
             byte[] audioBytes = inputStream.readAllBytes();
             log.debug("Successfully downloaded audio. size={} bytes", audioBytes.length);
             return audioBytes;
-            
+
         } catch (IOException e) {
-            log.error("Failed to read audio stream from S3. bucket={}, key={}, fileUrl={}", 
+            log.error("Failed to read audio stream from S3. bucket={}, key={}, fileUrl={}",
                     amazonConfig.getBucket(), key, fileUrl, e);
             throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
         } catch (Exception e) {
-            log.error("Failed to download audio from S3. bucket={}, key={}, fileUrl={}", 
+            log.error("Failed to download audio from S3. bucket={}, key={}, fileUrl={}",
                     amazonConfig.getBucket(), key, fileUrl, e);
             throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
         }
     }
 
-    /**
-     * S3 URL에서 key를 추출합니다.
-     * 다양한 S3 URL 형식을 지원합니다:
-     * - https://bucket.s3.region.amazonaws.com/key
-     * - https://s3.region.amazonaws.com/bucket/key
-     * - https://bucket.s3-region.amazonaws.com/key
-     * - 직접 key만 있는 경우
-     */
     private String resolveS3Key(String fileUrl) {
         if (!StringUtils.hasText(fileUrl)) {
             log.error("fileUrl is empty or null");
@@ -182,42 +242,30 @@ public class AnalysisService {
         }
 
         String bucket = amazonConfig.getBucket();
-        
+
         try {
             URI uri = URI.create(fileUrl);
             String path = uri.getPath();
-            
-            // URL이 정상적으로 파싱되고 path가 있는 경우
+
             if (StringUtils.hasText(path)) {
-                // path에서 앞의 "/" 제거
                 String key = path.startsWith("/") ? path.substring(1) : path;
-                
-                // path가 bucket으로 시작하는 경우 (s3.region.amazonaws.com/bucket/key 형식)
                 if (key.startsWith(bucket + "/")) {
                     return key.substring(bucket.length() + 1);
                 }
-                
-                // 이미 key만 있는 경우
                 if (StringUtils.hasText(key)) {
                     return key;
                 }
             }
         } catch (IllegalArgumentException e) {
             log.warn("Failed to parse fileUrl as URI: {}", fileUrl, e);
-            // URI 파싱 실패 시 아래 로직으로 계속 진행
         }
 
-        // URL에서 bucket 이름을 찾아서 그 뒤의 key를 추출
-        // 형식: https://bucket.s3.region.amazonaws.com/key
         int bucketIndex = fileUrl.indexOf(bucket);
         if (bucketIndex >= 0) {
-            // bucket 이름 다음의 "/" 또는 "?" 위치 찾기
             int startIdx = bucketIndex + bucket.length();
-            
-            // "/" 또는 "?" 찾기
             int slashIndex = fileUrl.indexOf("/", startIdx);
             int queryIndex = fileUrl.indexOf("?", startIdx);
-            
+
             int endIndex = -1;
             if (slashIndex >= 0 && queryIndex >= 0) {
                 endIndex = Math.min(slashIndex, queryIndex);
@@ -226,10 +274,9 @@ public class AnalysisService {
             } else if (queryIndex >= 0) {
                 endIndex = queryIndex;
             }
-            
+
             if (endIndex >= 0 && endIndex + 1 < fileUrl.length()) {
                 String key = fileUrl.substring(endIndex + 1);
-                // query parameter 제거
                 int queryParamIndex = key.indexOf("?");
                 if (queryParamIndex >= 0) {
                     key = key.substring(0, queryParamIndex);
@@ -239,9 +286,6 @@ public class AnalysisService {
                 }
             }
         }
-        
-        // 위의 모든 방법이 실패한 경우, fileUrl 자체를 key로 사용
-        // (이미 key만 있는 경우)
         log.debug("Using fileUrl as-is for S3 key: {}", fileUrl);
         return fileUrl;
     }

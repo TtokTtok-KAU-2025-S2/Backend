@@ -14,6 +14,7 @@ import TtokTtok.Backend.web.dto.noise.NoiseRecordDTO;
 import TtokTtok.Backend.config.jwt.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -29,6 +31,7 @@ public class NoiseRecordService {
     private final NoiseDiaryRepository noiseDiaryRepository;
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
+    private final AnalysisService analysisService;
 
     // 총 소음 기록 수 조회
     public long getTotalCount() { // ⭐ userId 매개변수 제거
@@ -141,24 +144,36 @@ public class NoiseRecordService {
             throw new IllegalArgumentException("본인의 기록만 전송 가능합니다.");
         }
 
-        // reportYn, reportedAt 업데이트
+        // ----------------------------------------
+        // ✨ 1. AI 요약 생성 및 저장 로직 추가
+        // ----------------------------------------
+        if (diary.getSummary() == null || diary.getSummary().isEmpty()) {
+            try {
+                log.info("소음 일기 전송 시 AI 요약 생성 시작 (ID: {})", recordId);
+                String aiSummary = analysisService.generateSummaryForReport(diary);
+                if (aiSummary != null) {
+                    diary.setSummary(aiSummary);
+                    log.info("AI 요약 생성 성공: {}", aiSummary);
+                }
+            } catch (Exception e) {
+                log.error("AI 요약 생성 실패 (무시하고 전송 진행): {}", e.getMessage());
+            }
+        }
+
+        // 2. reportYn, reportedAt 업데이트
         diary.setReportYn(true);
         diary.setReportedAt(LocalDateTime.now());
 
-        // Vote 객체 생성
+        // 3. Vote 객체 생성 (내가 작성한 글에는 '안들려요' 등 투표 안 함? 요구사항에 따라 조정 가능. 여기선 유지)
+        // *참고: 작성자 본인이 '안 들려요'를 누르는 것은 이상할 수 있으나, 기존 로직 유지
         Vote vote = Vote.builder()
                 .user(user)
                 .noiseDiary(diary)
                 .type(VoteType.NOT_HEARD)
                 .build();
 
-// repository 인스턴스로 저장
         voteRepository.save(vote);
-
     }
-
-
-
 
 
     // 소음 기록 한 건 업데이트

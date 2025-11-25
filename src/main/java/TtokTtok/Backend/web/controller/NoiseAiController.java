@@ -25,12 +25,12 @@ public class NoiseAiController {
         return ApiResponse.onSuccess(analysisService.analyzeCategory(request));
     }
 
-    @PostMapping("/summary")
-    public ApiResponse<NoiseAiResponse.SummaryDto> generateSummary(
-            @Valid @RequestBody NoiseAiRequest.SummaryRequest request
-    ) {
-        return ApiResponse.onSuccess(analysisService.generateSummary(request));
-    }
+//    @PostMapping("/summary")
+//    public ApiResponse<NoiseAiResponse.SummaryDto> generateSummary(
+//            @Valid @RequestBody NoiseAiRequest.SummaryRequest request
+//    ) {
+//        return ApiResponse.onSuccess(analysisService.generateSummary(request));
+//    }
 }
 
 
