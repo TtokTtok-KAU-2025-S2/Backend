@@ -18,8 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,6 +33,34 @@ public class RecordingServiceImpl implements RecordingService {
     private final AmazonS3Manager s3Manager;
     private final UuidRepository uuidRepository;
     private final RecordingRepository recordingRepository;
+
+    // ----------------------------------------------------------------
+    // ✨ [신규 기능] 내 녹음 파일 전체 목록 조회
+    // ----------------------------------------------------------------
+    @Override
+    @Transactional(readOnly = true)
+    public List<RecordingResponse.RecordDto> getAllRecordings() {
+        // 1. 사용자 조회
+        String userEmail = SecurityUtil.getCurrentUserEmail();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 2. DB 조회 (Repository에 해당 메서드가 정의되어 있어야 함)
+        List<VoiceRecording> recordings = recordingRepository.findAllByUserOrderByCreatedAtDesc(user);
+
+        // 3. DTO 변환
+        return recordings.stream()
+                .map(record -> RecordingResponse.RecordDto.builder()
+                        .recordingId(record.getId())
+                        .fileUrl(record.getFileUrl())
+                        .originalFileName(record.getOriginalFileName())
+                        .duration(record.getDuration())
+                        .dbMax(record.getDbMax())
+                        .dbAvg(record.getDbAvg())
+                        .createdAt(record.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
     @Override
     public RecordingResponse.UploadDto uploadRecording(MultipartFile voiceFile, Integer duration, Double dbMax, Double dbAvg) {

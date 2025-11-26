@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 public class RecordingResponse {
 
@@ -16,4 +17,18 @@ public class RecordingResponse {
         private String fileUrl;   // S3 업로드 URL
         private String createdAt; // 생성 시간
     }
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecordDto {
+        private Long recordingId;
+        private String fileUrl;
+        private String originalFileName;
+        private Integer duration;
+        private Double dbMax;
+        private Double dbAvg;
+        private LocalDateTime createdAt;
+    }
+
 }
