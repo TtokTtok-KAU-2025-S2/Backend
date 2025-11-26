@@ -6,8 +6,6 @@ import TtokTtok.Backend.common.enums.NoiseCategory;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.domain.VoiceRecording;
-import TtokTtok.Backend.external.openai.OpenAiClient;
-import TtokTtok.Backend.external.openai.OpenAiClient.OpenAiChatRequest;
 import TtokTtok.Backend.repository.RecordingRepository;
 import TtokTtok.Backend.config.AmazonConfig;
 import TtokTtok.Backend.config.jwt.SecurityUtil;
@@ -16,12 +14,10 @@ import TtokTtok.Backend.web.dto.ai.NoiseAiResponse;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -29,16 +25,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
- * AI 분석 파이프라인
- * - 카테고리 분류: OpenAI (JSON 포맷)
- * - 요약 생성: Google Gemini (텍스트 생성)
+ * AI 분석 파이프라인 (전면 Gemini 전환)
+ * - 카테고리 분류 & STT: Google Gemini (멀티모달)
+ * - 요약 생성: Google Gemini (텍스트)
  */
 @Slf4j
 @Service
@@ -48,143 +40,107 @@ public class AnalysisService {
 
     private static final DateTimeFormatter DISPLAY_DATE_TIME = DateTimeFormatter.ofPattern("MM월 dd일 HH:mm");
 
-    private static final String CATEGORY_SYSTEM_PROMPT = """
-            당신은 층간소음 패턴을 분류하는 전문가입니다. 제공된 녹음 내용과 측정 데이터를 기반으로 가장 적합한 카테고리를 선택하세요.
-            가능한 카테고리: FOOTSTEPS, HAMMERING, FURNITURE, MUSIC, UNKNOWN.
+    // 오디오 분석용 통합 프롬프트 (분류 + STT + 이유)
+    private static final String AUDIO_ANALYSIS_PROMPT = """
+            이 오디오 파일을 듣고 다음 작업을 수행하세요.
+            
+            1. [전사]: 오디오 내용을 텍스트로 받아쓰세요. (말소리가 없으면 소리 특징을 묘사하세요 ex: 쿵쿵거리는 소리)
+            2. [분류]: 소리를 다음 카테고리 중 하나로 분류하세요.
+               - FOOTSTEPS (발소리, 쿵쿵)
+               - HAMMERING (망치질, 두드림)
+               - FURNITURE (가구 끄는 소리)
+               - MUSIC (악기, 노래)
+               - UNKNOWN (기타, 식별 불가)
+            3. [이유]: 분류한 이유를 간략히 설명하세요.
+            
+            반드시 아래 JSON 형식으로만 응답하세요 (Markdown 없이 JSON만 출력).
+            {
+              "transcript": "전사 내용",
+              "category": "카테고리(영어)",
+              "reason": "이유"
+            }
             """;
 
-    // ✨ [Gemini용] 객관적인 팩트 요약 프롬프트
+    // 요약용 프롬프트
     private static final String SUMMARY_SYSTEM_PROMPT = """
             당신은 층간소음 상황을 팩트 위주로 간결하게 요약하는 리포터입니다.
             주어진 데이터를 바탕으로 '언제, 얼마 동안, 어떤 소음이 발생했는지'를 한 문장으로 요약하세요.
-            
             [작성 규칙]
-            1. 불필요한 서술이나 감정적 표현(공감, 위로 등)은 절대 금지합니다.
-            2. 날짜, 시간, 지속시간, 소음 종류를 반드시 포함하세요.
-            3. 어미는 '~발생', '~함' 등으로 간결하게 끝맺으세요.
-            
-            [출력 예시]
-            - 10월 28일 23:00경, 10분간 지속적인 쿵쿵거리는 발소리 소음 발생
-            - 11월 05일 14:20경, 5분간 간헐적인 망치질 소음 발생
+            1. 불필요한 서술이나 감정적 표현은 금지.
+            2. 날짜, 시간, 지속시간, 소음 종류 포함.
+            3. 어미는 '~발생', '~함' 등으로 간결하게.
             """;
 
     private final RecordingRepository recordingRepository;
     private final AmazonS3 amazonS3;
     private final AmazonConfig amazonConfig;
-    private final OpenAiClient openAiClient; // 카테고리 분석용 (JSON 응답 필요 시 사용)
-    private final GeminiService geminiService; // ✨ 요약 생성용 (Google Gemini)
+    private final GeminiService geminiService; // ✨ OpenAI 제거, Gemini만 사용
     private final ObjectMapper objectMapper;
 
     // ----------------------------------------------------------------
-    // ✨ [수정] Gemini를 사용한 내부 호출용 AI 요약 생성 메서드
+    // ✨ [핵심 수정] ID 기반 카테고리 분석 (Gemini 멀티모달 적용)
+    // ----------------------------------------------------------------
+    public NoiseAiResponse.CategoryAnalysisDto analyzeCategory(NoiseAiRequest.CategoryRequest request) {
+        // 1. 녹음 파일 조회 (ID 기반)
+        VoiceRecording recording = getOwnedRecording(request.getRecordId());
+
+        log.info("녹음 파일 Gemini 분석 시작 (ID: {})", recording.getId());
+
+        // 2. S3에서 파일 다운로드 (byte[])
+        byte[] audioBytes = downloadRecording(recording.getFileUrl());
+        String mimeType = guessMimeType(recording.getOriginalFileName());
+
+        // 3. ✨ Gemini에게 오디오 + 프롬프트 전송
+        // (Whisper, GPT 과정을 Gemini 호출 한 번으로 통합)
+        String jsonResponse = geminiService.analyzeAudio(audioBytes, mimeType, AUDIO_ANALYSIS_PROMPT);
+
+        // 4. 응답 파싱
+        AudioAnalysisResult result = parseAnalysisResult(jsonResponse);
+
+        // 5. DTO 반환
+        return NoiseAiResponse.CategoryAnalysisDto.builder()
+                .category(result.category())
+                .transcript(result.transcript())
+                .reason(result.reason())
+                // 메타데이터 매핑
+                .createdAt(recording.getCreatedAt())
+                .duration(recording.getDuration())
+                .dbMax(recording.getDbMax())
+                .dbAvg(recording.getDbAvg())
+                .build();
+    }
+
+    // ----------------------------------------------------------------
+    // 요약 생성 (기존 유지)
     // ----------------------------------------------------------------
     public String generateSummaryForReport(NoiseDiary diary) {
-        // 1. 사용자 데이터 프롬프트 구성
         String userPrompt = buildSummaryUserPromptFromEntity(diary);
-
-        // 2. 시스템 프롬프트와 결합 (GeminiService.fromTextInput은 단일 텍스트를 받으므로)
-        String finalPrompt = SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt;
-
-        // 3. Gemini 호출
         try {
-            log.info("Gemini AI 요약 요청 시작 (Diary ID: {})", diary.getId());
-            String completion = geminiService.fromTextInput(finalPrompt);
-            log.info("Gemini AI 요약 완료: {}", completion);
+            String completion = geminiService.fromTextInput(SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt);
             return sanitizeAssistantText(completion);
         } catch (Exception e) {
-            log.error("Gemini AI 요약 생성 실패 (Diary ID: {}): {}", diary.getId(), e.getMessage());
+            log.error("Gemini AI 요약 생성 실패: {}", e.getMessage());
             return null;
         }
     }
 
-    // [프롬프트 빌더] NoiseDiary 엔티티 -> 텍스트
-    private String buildSummaryUserPromptFromEntity(NoiseDiary diary) {
-        LocalDateTime occuredAt = diary.getOccuredAt() != null ? diary.getOccuredAt() : LocalDateTime.now();
-
-        // 카테고리 한글 변환
-        String categoryKr = switch (diary.getCategory()) {
-            case FOOTSTEPS -> "발소리(쿵쿵거림)";
-            case HAMMERING -> "망치질/두드리는 소리";
-            case FURNITURE -> "가구 끄는 소리";
-            case MUSIC -> "악기/음악 소리";
-            case UNKNOWN -> "알 수 없는 소음";
-        };
-
-        return """
-                [요청 데이터]
-                - 발생 시각: %s
-                - 지속 시간: %d초
-                - 소음 종류: %s
-                - 평균 데시벨: %s dB
-                - 사용자 메모: %s
-                
-                위 데이터를 바탕으로 한 줄 요약을 작성해 주세요.
-                """.formatted(
-                occuredAt.format(DISPLAY_DATE_TIME),
-                diary.getDuration(),
-                categoryKr,
-                diary.getDbAvg(),
-                (diary.getDescription() != null ? diary.getDescription() : "없음")
-        );
-    }
-
-    // ----------------------------------------------------------------
-    // [수정] 컨트롤러용 요약 메서드도 Gemini로 변경
-    // ----------------------------------------------------------------
     public NoiseAiResponse.SummaryDto generateSummary(NoiseAiRequest.SummaryRequest request) {
-        VoiceRecording recording = getOwnedRecording(request.getRecordId());
-        String transcript = resolveTranscript(request.getTranscript(), recording);
+        String userPrompt = buildSummaryUserPromptFromEntity(NoiseDiary.builder()
+                .occuredAt(request.getOccuredAt())
+                .duration(request.getDuration())
+                .category(request.getCategory())
+                .dbAvg(request.getDbAvg())
+                .description(request.getDescription())
+                .build());
 
-        String userPrompt = buildSummaryUserPrompt(request, transcript);
-        String finalPrompt = SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt;
-
-        // ✨ Gemini 호출로 변경
-        String completion = geminiService.fromTextInput(finalPrompt);
-        String summary = sanitizeAssistantText(completion);
-
+        String completion = geminiService.fromTextInput(SUMMARY_SYSTEM_PROMPT + "\n\n" + userPrompt);
         return NoiseAiResponse.SummaryDto.builder()
                 .category(request.getCategory())
-                .transcript(transcript)
-                .summary(summary)
+                .summary(sanitizeAssistantText(completion))
                 .build();
     }
 
-    // ----------------------------------------------------------------
-    // 기존 메서드들 (카테고리 분석 등) - OpenAI 유지
-    // ----------------------------------------------------------------
-
-    public NoiseAiResponse.CategoryAnalysisDto analyzeCategory(NoiseAiRequest.CategoryRequest request) {
-        VoiceRecording recording = getOwnedRecording(request.getRecordId());
-        String transcript = transcribeRecording(recording);
-
-        String userPrompt = buildCategoryUserPrompt(request, transcript);
-        Map<String, Object> responseFormat = buildCategoryResponseFormat();
-
-        // 카테고리 분석은 JSON 포맷팅이 필요하므로 OpenAI 유지
-        String completion = openAiClient.createChatCompletion(
-                OpenAiChatRequest.builder()
-                        .systemPrompt(CATEGORY_SYSTEM_PROMPT)
-                        .userPrompt(userPrompt)
-                        .responseFormat(responseFormat)
-                        .temperature(0.0)
-                        .maxTokens(128)
-                        .build()
-        );
-
-        CategoryDecisionResult decision = parseCategoryDecision(completion);
-
-        return NoiseAiResponse.CategoryAnalysisDto.builder()
-                .category(decision.category())
-                .transcript(transcript)
-                .reason(decision.reason())
-                .createdAt(recording.getCreatedAt()) // 생성 시간
-                .duration(recording.getDuration())   // 녹음/소음 지속 시간
-                .dbMax(recording.getDbMax())         // 최대 데시벨
-                .dbAvg(recording.getDbAvg())         // 평균 데시벨
-                .build();
-    }
-
-    // ... (이하 private helper 메서드들은 변경 없음) ...
+    // --- Helper Methods ---
 
     private VoiceRecording getOwnedRecording(Long recordId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
@@ -198,226 +154,97 @@ public class AnalysisService {
         return recording;
     }
 
-    private String resolveTranscript(String existingTranscript, VoiceRecording recording) {
-        if (StringUtils.hasText(existingTranscript)) {
-            return existingTranscript;
+    // JSON 파싱 헬퍼
+    private AudioAnalysisResult parseAnalysisResult(String jsonResponse) {
+        try {
+            String cleanJson = sanitizeAssistantText(jsonResponse);
+            AudioAnalysisPayload payload = objectMapper.readValue(cleanJson, AudioAnalysisPayload.class);
+
+            NoiseCategory category;
+            try {
+                category = NoiseCategory.valueOf(payload.category().toUpperCase(Locale.ROOT));
+            } catch (Exception e) {
+                category = NoiseCategory.UNKNOWN;
+            }
+            return new AudioAnalysisResult(category, payload.transcript(), payload.reason());
+        } catch (Exception e) {
+            log.error("Gemini 응답 파싱 실패: {}", jsonResponse, e);
+            return new AudioAnalysisResult(NoiseCategory.UNKNOWN, "분석 실패", "응답 형식을 인식할 수 없습니다.");
         }
-        return transcribeRecording(recording);
     }
 
-    private String transcribeRecording(VoiceRecording recording) {
-        byte[] audioBytes = downloadRecording(recording.getFileUrl());
-        MediaType mediaType = guessMediaType(recording.getOriginalFileName());
-        String filename = determineFileName(recording);
-        return openAiClient.transcribe(audioBytes, filename, mediaType);
+    private String sanitizeAssistantText(String raw) {
+        if (!StringUtils.hasText(raw)) return "";
+        String trimmed = raw.trim();
+        if (trimmed.startsWith("```json")) {
+            trimmed = trimmed.replace("```json", "");
+        } else if (trimmed.startsWith("```")) {
+            trimmed = trimmed.replace("```", "");
+        }
+        if (trimmed.endsWith("```")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 3);
+        }
+        return trimmed.trim();
     }
 
     private byte[] downloadRecording(String fileUrl) {
-        if (!StringUtils.hasText(fileUrl)) {
-            log.error("fileUrl is empty, cannot download recording");
-            throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
-        }
-
+        if (!StringUtils.hasText(fileUrl)) throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
         String key = resolveS3Key(fileUrl);
-        log.debug("Downloading audio from S3. bucket={}, key={}", amazonConfig.getBucket(), key);
-
         try (S3Object s3Object = amazonS3.getObject(amazonConfig.getBucket(), key);
              S3ObjectInputStream inputStream = s3Object.getObjectContent()) {
-
-            byte[] audioBytes = inputStream.readAllBytes();
-            log.debug("Successfully downloaded audio. size={} bytes", audioBytes.length);
-            return audioBytes;
-
-        } catch (IOException e) {
-            log.error("Failed to read audio stream from S3. bucket={}, key={}, fileUrl={}",
-                    amazonConfig.getBucket(), key, fileUrl, e);
-            throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
+            return inputStream.readAllBytes();
         } catch (Exception e) {
-            log.error("Failed to download audio from S3. bucket={}, key={}, fileUrl={}",
-                    amazonConfig.getBucket(), key, fileUrl, e);
             throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
         }
     }
 
     private String resolveS3Key(String fileUrl) {
-        if (!StringUtils.hasText(fileUrl)) {
-            log.error("fileUrl is empty or null");
-            throw new GeneralException(ErrorStatus.AUDIO_DOWNLOAD_FAILED);
-        }
-
         String bucket = amazonConfig.getBucket();
-
         try {
             URI uri = URI.create(fileUrl);
             String path = uri.getPath();
-
             if (StringUtils.hasText(path)) {
                 String key = path.startsWith("/") ? path.substring(1) : path;
-                if (key.startsWith(bucket + "/")) {
-                    return key.substring(bucket.length() + 1);
-                }
-                if (StringUtils.hasText(key)) {
-                    return key;
-                }
+                if (key.startsWith(bucket + "/")) return key.substring(bucket.length() + 1);
+                return key;
             }
-        } catch (IllegalArgumentException e) {
-            log.warn("Failed to parse fileUrl as URI: {}", fileUrl, e);
-        }
-
-        int bucketIndex = fileUrl.indexOf(bucket);
-        if (bucketIndex >= 0) {
-            int startIdx = bucketIndex + bucket.length();
-            int slashIndex = fileUrl.indexOf("/", startIdx);
-            int queryIndex = fileUrl.indexOf("?", startIdx);
-
-            int endIndex = -1;
-            if (slashIndex >= 0 && queryIndex >= 0) {
-                endIndex = Math.min(slashIndex, queryIndex);
-            } else if (slashIndex >= 0) {
-                endIndex = slashIndex;
-            } else if (queryIndex >= 0) {
-                endIndex = queryIndex;
-            }
-
-            if (endIndex >= 0 && endIndex + 1 < fileUrl.length()) {
-                String key = fileUrl.substring(endIndex + 1);
-                int queryParamIndex = key.indexOf("?");
-                if (queryParamIndex >= 0) {
-                    key = key.substring(0, queryParamIndex);
-                }
-                if (StringUtils.hasText(key)) {
-                    return key;
-                }
-            }
-        }
-        log.debug("Using fileUrl as-is for S3 key: {}", fileUrl);
-        return fileUrl;
+        } catch (Exception e) {}
+        return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
     }
 
-    private MediaType guessMediaType(String originalFileName) {
-        if (!StringUtils.hasText(originalFileName) || !originalFileName.contains(".")) {
-            return MediaType.APPLICATION_OCTET_STREAM;
-        }
+    private String guessMimeType(String originalFileName) {
+        if (!StringUtils.hasText(originalFileName) || !originalFileName.contains(".")) return "audio/mpeg"; // default
         String ext = originalFileName.substring(originalFileName.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
         return switch (ext) {
-            case "mp3" -> MediaType.valueOf("audio/mpeg");
-            case "wav" -> MediaType.valueOf("audio/wav");
-            case "m4a" -> MediaType.valueOf("audio/mp4");
-            case "aac" -> MediaType.valueOf("audio/aac");
-            case "webm" -> MediaType.valueOf("audio/webm");
-            default -> MediaType.APPLICATION_OCTET_STREAM;
+            case "mp3" -> "audio/mpeg";
+            case "wav" -> "audio/wav";
+            case "m4a" -> "audio/mp4";
+            case "aac" -> "audio/aac";
+            case "webm" -> "audio/webm";
+            case "ogg" -> "audio/ogg";
+            default -> "audio/mpeg";
         };
     }
 
-    private String determineFileName(VoiceRecording recording) {
-        if (StringUtils.hasText(recording.getOriginalFileName())) {
-            return recording.getOriginalFileName();
-        }
-        return "voice-recording-" + recording.getId() + ".m4a";
-    }
-
-    private Map<String, Object> buildCategoryResponseFormat() {
-        var categories = Arrays.stream(NoiseCategory.values())
-                .map(Enum::name)
-                .toList();
-
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("category", Map.of(
-                "type", "string",
-                "enum", categories
-        ));
-        properties.put("reason", Map.of(
-                "type", "string",
-                "description", "카테고리를 선택한 간단한 이유"
-        ));
-
-        Map<String, Object> schema = new HashMap<>();
-        schema.put("type", "object");
-        schema.put("properties", properties);
-        schema.put("required", List.of("category", "reason"));
-        schema.put("additionalProperties", false);
-
-        return Map.of(
-                "type", "json_schema",
-                "json_schema", Map.of(
-                        "name", "noise_category_schema",
-                        "schema", schema
-                )
-        );
-    }
-
-    private String buildCategoryUserPrompt(NoiseAiRequest.CategoryRequest request, String transcript) {
+    private String buildSummaryUserPromptFromEntity(NoiseDiary diary) {
+        LocalDateTime occuredAt = diary.getOccuredAt() != null ? diary.getOccuredAt() : LocalDateTime.now();
         return """
-                다음은 한 사용자가 녹음한 층간소음 내용입니다.
-                녹음 내용을 분석하여 가장 적합한 소음 카테고리를 선택하세요.
-
-                녹음 내용:
-                %s
-                """.formatted(transcript);
-    }
-
-    private String buildSummaryUserPrompt(NoiseAiRequest.SummaryRequest request, String transcript) {
-        LocalDateTime occuredAt = request.getOccuredAt() != null ? request.getOccuredAt() : LocalDateTime.now();
-        String grade = request.getNoiseGrade() != null ? request.getNoiseGrade().name() : "UNKNOWN";
-        return """
-                측정 시각: %s
-                평균 데시벨: %s dB
-                최대 데시벨: %s dB
-                소음 지속 시간: %d초
-                소음 등급: %s
-                사용자가 선택한 소음 카테고리: %s
-                사용자의 메모: %s
-
-                녹음에서 추출한 내용:
-                %s
+                [데이터]
+                - 발생 시각: %s
+                - 지속 시간: %d초
+                - 소음 종류: %s
+                - 평균 데시벨: %s dB
+                - 사용자 메모: %s
                 """.formatted(
                 occuredAt.format(DISPLAY_DATE_TIME),
-                request.getDbAvg(),
-                request.getDbHigh(),
-                request.getDuration(),
-                grade,
-                request.getCategory().name(),
-                request.getDescription(),
-                transcript
+                diary.getDuration(),
+                diary.getCategory(),
+                diary.getDbAvg(),
+                (diary.getDescription() != null ? diary.getDescription() : "없음")
         );
     }
 
-    private CategoryDecisionResult parseCategoryDecision(String completion) {
-        try {
-            CategoryDecisionPayload payload = objectMapper.readValue(completion, CategoryDecisionPayload.class);
-            NoiseCategory category = normalizeCategory(payload.category());
-            return new CategoryDecisionResult(category, payload.reason());
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse OpenAI category response: {}", completion, e);
-            throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
-        }
-    }
-
-    private NoiseCategory normalizeCategory(String categoryText) {
-        try {
-            return NoiseCategory.valueOf(categoryText.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            return NoiseCategory.UNKNOWN;
-        }
-    }
-
-    private String sanitizeAssistantText(String raw) {
-        if (!StringUtils.hasText(raw)) {
-            throw new GeneralException(ErrorStatus.OPENAI_COMPLETION_FAILED);
-        }
-        String trimmed = raw.trim();
-        if (trimmed.startsWith("```")) {
-            trimmed = trimmed.replace("```", "").trim();
-        }
-        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() > 1) {
-            trimmed = trimmed.substring(1, trimmed.length() - 1);
-        }
-        return trimmed;
-    }
-
-    private record CategoryDecisionPayload(String category, String reason) {
-    }
-
-    private record CategoryDecisionResult(NoiseCategory category, String reason) {
-    }
+    // DTO for internal parsing
+    private record AudioAnalysisPayload(String transcript, String category, String reason) {}
+    private record AudioAnalysisResult(NoiseCategory category, String transcript, String reason) {}
 }

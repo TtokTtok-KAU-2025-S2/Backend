@@ -96,7 +96,8 @@ public class NoiseCalendarService{
                         diary.getGrade(),           // grade (String)
                         diary.getDbHigh(),                 // dbHigh
                         diary.getDbAvg(),                  // dbAvg
-                        diary.getSummary()                 // summary
+                        // diary.getSummary(), // ✨ 삭제
+                        diary.getDescription() // ✨ description으로 대체               // summary
                 ))
                 .collect(Collectors.toList());
 

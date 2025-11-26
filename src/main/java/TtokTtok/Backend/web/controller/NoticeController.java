@@ -1,6 +1,6 @@
 package TtokTtok.Backend.web.controller;
-//API 엔드포인트 생성
 
+import TtokTtok.Backend.apiPayload.ApiResponse; // ✨ ApiResponse 임포트 필수
 import TtokTtok.Backend.converter.NoticeConverter;
 import TtokTtok.Backend.domain.Notice;
 import TtokTtok.Backend.service.NoticeService;
@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,39 +18,37 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/notice")
 @RequiredArgsConstructor
 public class NoticeController {
-     private final NoticeService noticeService;
 
-     @PostMapping(consumes = "multipart/form-data")
-     @PreAuthorize("hasRole('ADMIN')") // ADMIN 역할만 접근 허용
-     public ResponseEntity<NoticeResponse.NoticeDetailDto> createNotice(
-             // [변경] @RequestPart 대신 @ModelAttribute 사용
-             @ModelAttribute @Valid NoticeRequest.CreateNoticeDto request
-     ) {
-         // [제거] ObjectMapper로 변환하는 로직 삭제
-         // NoticeRequest.CreateNoticeDto request = objectMapper.readValue(requestString, NoticeRequest.CreateNoticeDto.class);
+    private final NoticeService noticeService;
 
-         // [변경] 서비스 호출 시 DTO 객체 하나만 전달
-         Notice notice = noticeService.createNotice(request);
+    // 1. 공지사항 생성 (ADMIN 권한)
+    @PostMapping(consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<NoticeResponse.NoticeDetailDto> createNotice(
+            @ModelAttribute @Valid NoticeRequest.CreateNoticeDto request
+    ) {
+        Notice notice = noticeService.createNotice(request);
+        // ✨ ResponseEntity 대신 ApiResponse.onSuccess 사용
+        return ApiResponse.onSuccess(NoticeConverter.toNoticeDetailDto(notice));
+    }
 
-         NoticeResponse.NoticeDetailDto responseDto = NoticeConverter.toNoticeDetailDto(notice);
-         return ResponseEntity.ok(responseDto);
-     }
+    // 2. 공지사항 상세 조회
+    @GetMapping("/{noticeId}")
+    public ApiResponse<NoticeResponse.NoticeDetailDto> getNotice(@PathVariable Long noticeId) {
+        Notice notice = noticeService.getNotice(noticeId);
+        // ✨ ApiResponse.onSuccess 사용
+        return ApiResponse.onSuccess(NoticeConverter.toNoticeDetailDto(notice));
+    }
 
-     @GetMapping("/{noticeId}")
-     public ResponseEntity<NoticeResponse.NoticeDetailDto> getNotice(@PathVariable Long noticeId) {
-         Notice notice = noticeService.getNotice(noticeId);
-         NoticeResponse.NoticeDetailDto responseDto = NoticeConverter.toNoticeDetailDto(notice);
-         return ResponseEntity.ok(responseDto);
-     }
-
-    // 공지사항 목록 조회 API 추가
+    // 3. 공지사항 목록 조회
     @GetMapping
-    public ResponseEntity<NoticeResponse.NoticeListResponse> getNoticeList(
+    public ApiResponse<NoticeResponse.NoticeListResponse> getNoticeList(
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Notice> noticePage = noticeService.getNoticeList(pageable);
-        return ResponseEntity.ok(NoticeConverter.toNoticeListResponse(noticePage));
+        // ✨ ApiResponse.onSuccess 사용
+        return ApiResponse.onSuccess(NoticeConverter.toNoticeListResponse(noticePage));
     }
- }
+}

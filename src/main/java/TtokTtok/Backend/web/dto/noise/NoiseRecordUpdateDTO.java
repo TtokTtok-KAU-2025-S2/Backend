@@ -13,14 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NoiseRecordUpdateDTO {
-    private Long Id;          // 소음일기 고유 ID
-    private NoiseCategory category;           // 소음 카테고리 ( FOOTSTEPS, HAMMERING, FURNITURE, MUSIC, UNKNOWN )
-    private LocalDateTime occuredAt;          // 소음 생성 시각
-    private NoiseGrade noiseGrade;           //소음 등급(QUIET, NORMAL, LOUD)
-    private BigDecimal dbHigh;              // 최대 데시벨
-    private BigDecimal dbAvg;              // 평균 데시벨
-    private String summary;             // AI가 생성한 소음 메모
+    private NoiseCategory category;
+    private LocalDateTime occuredAt;
+    private NoiseGrade noiseGrade;
+    private BigDecimal dbHigh;
+    private BigDecimal dbAvg;
+    // private String summary;  // 삭제: AI 요약 대신 사용자 메모만 수정
+    private String description; // ✨ 사용자 작성 메모
     private LocalDateTime updatedAt;
-
-
 }

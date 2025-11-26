@@ -176,15 +176,16 @@ public class NoiseRecordService {
     }
 
 
-    // 소음 기록 한 건 업데이트
-    public NoiseRecordDTO updateNoiseRecord(Long recordId, NoiseRecordUpdateDTO request) { // ⭐ userId 매개변수 제거
-        Long userId = SecurityUtil.getCurrentUserId(); // JWT에서 추출
+    // ------------------------------------------------------------
+    // ✨ [수정] 소음 기록 수정 로직 (description 반영, summary 제거)
+    // ------------------------------------------------------------
+    public NoiseRecordDTO updateNoiseRecord(Long recordId, NoiseRecordUpdateDTO request) {
+        Long userId = SecurityUtil.getCurrentUserId();
         User user = getUser(userId);
 
         NoiseDiary diary = noiseDiaryRepository.findByIdAndUser(recordId, user)
                 .orElseThrow(() -> new IllegalArgumentException("수정하려는 소음 기록이 존재하지 않습니다."));
 
-        // 4. enum 변환 (카테고리 / 등급)
         try {
             diary.setCategory(request.getCategory());
             diary.setGrade(request.getNoiseGrade());
@@ -192,26 +193,28 @@ public class NoiseRecordService {
             throw new IllegalArgumentException("입력값이 유효하지 않습니다. (카테고리 또는 등급 형식 오류)");
         }
 
-        // 5. occuredAt 파싱
         diary.setOccuredAt(request.getOccuredAt());
-
-        // 6. 수치 & 메모 업데이트
         diary.setDbHigh(request.getDbHigh());
         diary.setDbAvg(request.getDbAvg());
-        diary.setSummary(request.getSummary());
+
+        // ✨ [수정] description(사용자 메모)만 업데이트
+        diary.setDescription(request.getDescription());
+
+        // summary 업데이트 로직은 제거 (요청 DTO에서 필드를 삭제했으므로)
+
         diary.setUpdateAt(LocalDateTime.now());
 
-        // 7. 응답 DTO로 변환
+        // 응답 DTO 생성 (NoiseRecordDTO에도 summary가 있다면 null로 처리하거나 DTO를 수정해야 함)
+        // 여기서는 DTO 구조상 summary 필드가 있다면 기존 값을 넣거나 null 처리
         return new NoiseRecordDTO(
                 userId,
                 diary.getId(),
                 diary.getCategory(),
-                diary.getOccuredAt() ,
+                diary.getOccuredAt(),
                 diary.getGrade(),
                 diary.getDbHigh(),
                 diary.getDbAvg(),
-                diary.getSummary(),
-                diary.getDescription(),
+                diary.getDescription(), // ✨ description 반영
                 diary.getUpdateAt()
         );
     }
