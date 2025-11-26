@@ -58,3 +58,6 @@ cloud:
   logging:
     level:
       org.springframework.security: DEBUG
+
+  app:
+    host: Ttokttok-dev-env.eba-dp3skxgf.ap-northeast-2.elasticbeanstalk.com
