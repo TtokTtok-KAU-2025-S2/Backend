@@ -37,7 +37,7 @@ public class NoiseReportConverter {
 
     public static NoiseReportResponse.NoiseReportDetailDto toNoiseReportDetailDto(
             NoiseDiary noiseDiary, Map<VoteType, Long> voteCounts, List<CommentResponse.CommentDto> comments,
-            BigDecimal maxDb, BigDecimal avgDb)
+            BigDecimal maxDb, BigDecimal avgDb, VoteType myVoteType)
     {
         return NoiseReportResponse.NoiseReportDetailDto.builder()
                 .reportId(noiseDiary.getId())
@@ -49,6 +49,7 @@ public class NoiseReportConverter {
                 .avgDb(avgDb)
                 .voteCounts(voteCounts)
                 .comments(comments)
+                .myVoteType(myVoteType)
                 .build();
     }
 }

@@ -9,6 +9,7 @@ import TtokTtok.Backend.converter.NoiseReportConverter;
 import TtokTtok.Backend.domain.NoiseDiary;
 import TtokTtok.Backend.domain.ReportComment;
 import TtokTtok.Backend.domain.User;
+import TtokTtok.Backend.domain.Vote;
 import TtokTtok.Backend.repository.NoiseDiaryRepository;
 import TtokTtok.Backend.repository.ReportCommentRepository;
 import TtokTtok.Backend.repository.UserRepository;
@@ -91,7 +92,11 @@ public class NoiseReportServiceImpl implements NoiseReportService {
                 })
                 .collect(Collectors.toList());
 
-        return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary, voteCounts, commentDtos, noiseDiary.getDbHigh(),noiseDiary.getDbAvg());
+        VoteType myVoteType = voteRepository.findByUserAndNoiseDiary(user, noiseDiary)
+                .map(Vote::getType) // 투표가 존재하면 Type 추출
+                .orElse(null);      // 투표 안했으면 null
+
+        return NoiseReportConverter.toNoiseReportDetailDto(noiseDiary, voteCounts, commentDtos, noiseDiary.getDbHigh(),noiseDiary.getDbAvg(), myVoteType);
     }
 
 }

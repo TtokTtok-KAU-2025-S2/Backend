@@ -75,5 +75,7 @@ public class NoiseReportResponse {
         private BigDecimal avgDb; // 평균 데시벨
         private Map<VoteType, Long> voteCounts; // 투표 현황
         private List<CommentResponse.CommentDto> comments; // 댓글 목록
+
+        private VoteType myVoteType;
     }
 }
