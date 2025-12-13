@@ -32,5 +32,6 @@ public class DailyNoiseDiaryDTO {
         private BigDecimal dbAvg;
         // private String summary; // 삭제: AI 요약 안 보여줌
         private String description; // ✨ 추가: 사용자 메모 표시
+        private Integer duration;
     }
 }
