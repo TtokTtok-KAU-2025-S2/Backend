@@ -23,6 +23,7 @@ public class NoiseRecordDTO {
     private BigDecimal dbAvg;              // 평균 데시벨
     private String description;        //사용자가 작성한 소음 메모
     private LocalDateTime updatedAt;
+    private Integer duration;
 
 }
 

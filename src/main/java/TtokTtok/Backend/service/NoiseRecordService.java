@@ -215,7 +215,8 @@ public class NoiseRecordService {
                 diary.getDbHigh(),
                 diary.getDbAvg(),
                 diary.getDescription(), // ✨ description 반영
-                diary.getUpdateAt()
+                diary.getUpdateAt(),
+                diary.getDuration()
         );
     }
 

@@ -21,4 +21,5 @@ public class NoiseRecordUpdateDTO {
     // private String summary;  // 삭제: AI 요약 대신 사용자 메모만 수정
     private String description; // ✨ 사용자 작성 메모
     private LocalDateTime updatedAt;
+    private Integer duration;
 }
