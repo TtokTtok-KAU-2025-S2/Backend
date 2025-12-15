@@ -26,7 +26,7 @@ public class Vote extends BaseEntity {
     private NoiseDiary noiseDiary;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private VoteType type;
 
     public void updateType(VoteType type) {

@@ -13,6 +13,7 @@ import TtokTtok.Backend.repository.UserRepository;
 import TtokTtok.Backend.web.dto.noise.NoiseRecordDTO;
 import TtokTtok.Backend.config.jwt.SecurityUtil;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -178,7 +179,7 @@ public class NoiseRecordService {
         Vote vote = Vote.builder()
                 .user(user)
                 .noiseDiary(diary)
-                .type(VoteType.NOT_HEARD)
+                .type(null)
                 .build();
 
         voteRepository.save(vote);
