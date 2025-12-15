@@ -83,6 +83,15 @@ public class NoiseRecordService {
                 case HAMMERING -> avg = BigDecimal.valueOf(75.0);
                 case FURNITURE -> avg = BigDecimal.valueOf(55.0);
                 case MUSIC -> avg = BigDecimal.valueOf(60.0);
+                // ✨ [추가된 항목들에 대한 기본값 설정]
+                case VOICE -> avg = BigDecimal.valueOf(55.0);        // 대화/고성방가
+                case PET -> avg = BigDecimal.valueOf(65.0);          // 개 짖는 소리는 꽤 큼
+                case APPLIANCE -> avg = BigDecimal.valueOf(60.0);    // 청소기/세탁기
+                case DOOR -> avg = BigDecimal.valueOf(65.0);         // 문 쾅 닫는 소리 (순간 소음)
+                case WATER -> avg = BigDecimal.valueOf(50.0);        // 물 소리
+                case CONSTRUCTION -> avg = BigDecimal.valueOf(75.0); // 공사 소음 (매우 시끄러움)
+                case EXERCISE -> avg = BigDecimal.valueOf(60.0);     // 런닝머신/덤벨
+
                 default -> avg = BigDecimal.valueOf(50.0);
             }
             request.setDbAvg(avg);
