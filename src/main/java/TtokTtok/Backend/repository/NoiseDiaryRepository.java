@@ -83,7 +83,8 @@ public interface NoiseDiaryRepository extends JpaRepository<NoiseDiary, Long> {
             "(SELECT COUNT(v.id) FROM Vote v WHERE v.noiseDiary = n AND v.type = :notHeard), " +
             "(SELECT COUNT(v.id) FROM Vote v WHERE v.noiseDiary = n AND v.type = :beCareful)) " +
             "FROM NoiseDiary n " +
-            "WHERE n.user.apartment = :apartment AND n.user.dong = :dong AND n.reportYn = :reportYn")
+            "WHERE n.user.apartment = :apartment AND n.user.dong = :dong AND n.reportYn = :reportYn " +
+            "ORDER BY n.reportedAt desc ")
     Page<NoiseReportResponse.NoiseReportPreviewDto> findNoiseReportPreviews(
             @Param("apartment") Apartment apartment,
             @Param("dong") Integer dong,
