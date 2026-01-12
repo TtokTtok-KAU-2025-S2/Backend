@@ -5,7 +5,9 @@ import TtokTtok.Backend.domain.User;
 import TtokTtok.Backend.service.user.UserService;
 import TtokTtok.Backend.web.dto.user.UserRequest;
 import TtokTtok.Backend.web.dto.user.UserResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,9 +36,11 @@ public class UserController {
      }
 
     @GetMapping("/verify-email")
-    public ApiResponse<String> verifyEmail(@RequestParam("email") String email, @RequestParam("code") String code) {
+    public void verifyEmail(@RequestParam("email") String email, @RequestParam("code") String code, HttpServletResponse response)
+            throws IOException {
         userService.verifyEmail(email, code);
-        return ApiResponse.onSuccess("이메일 인증이 성공적으로 완료되었습니다.");
+        // 기말 시험 끝나고 희승님이 주실 url 붙여넣기
+        response.sendRedirect("https://your-frontend-app.com/auth/verification-success");
     }
 
      @PostMapping("/login")

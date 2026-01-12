@@ -1,5 +1,6 @@
 package TtokTtok.Backend.service.mail;
 
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender javaMailSender;
+    @Value("${app.host}")
+    private String appHost;
 
     public void sendTemporaryPasswordEmail(String toEmail, String temporaryPassword) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -39,7 +42,7 @@ public class EmailService {
             mimeMessageHelper.setSubject("[똑똑] 회원가입 이메일 인증 안내");
 
             // 여기에 프론트엔드 인증 처리 페이지 URL을 넣어주세요
-            String verificationUrl = "http://localhost:8080/api/users/verify-email?email=" + toEmail + "&code=" + verificationCode;
+            String verificationUrl = appHost + "/api/users/verify-email?email=" + toEmail + "&code=" + verificationCode;
 
             String emailBody = "안녕하세요. 똑똑입니다. \n\n" + "회원가입을 완료하려면 아래 링크를 클릭하여 이메일 인증을 진행해주세요.\n" + verificationUrl;
 
